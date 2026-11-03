@@ -1,32 +1,59 @@
 # Урок 3.3. Контекстные запросы, MultiQuery и RRF
 
-- [Полная пошаговая лекция и рабочий проект](lecture/README.md).
-- [Worksheet эксперимента](lecture/evaluation/Query-Experiment.md).
-- [Самостоятельное ДЗ: TTL/LRU-кеш query plans](homework/README.md).
-- [Проверка материалов и фактические результаты](VERIFICATION.md).
-- [Предыдущий урок 3.2](../lesson-3.2/README.md).
-- [Следующий урок 3.4](../lesson-3.4/README.md).
+RepoPilot учится готовить поисковые запросы с учётом истории разговора, искать по нескольким формулировкам и объединять найденные фрагменты. Вы добавите API для подготовки, генерации и сравнения ответов, сохранив исходный вопрос для финальной модели.
 
-RepoPilot получает отдельный query API: contextual compression, ограниченное расширение формулировок, до трёх searches и RRF перед прежним budget planner/advisor. Исходный вопрос остаётся вопросом для финальной модели. RRF score и cosine показаны отдельно.
+## Материалы
 
-Стек: Java 25, Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17/pgvector 0.8.1. UI диагностики унаследован; новый эксперимент выполняется JSON API, отдельной панели нет. Каждая папка lecture/homework — самостоятельный Maven-проект.
+| Материал | Ссылка |
+| --- | --- |
+| Лекция и рабочий пример | [Открыть лекцию](lecture/README.md) |
+| Домашнее задание | [Условия и каркас](homework/README.md) |
+| Тесты лекции | [Java](lecture/src/test/java/) · [JavaScript](lecture/src/test/js/) |
+| Приёмочные тесты ДЗ | [QueryPlanCacheAcceptanceTest](homework/src/test/java/dev/myfrei/repopilot/cache/QueryPlanCacheAcceptanceTest.java) |
 
-Из lecture, с подготовленными Ollama chat/embedding моделями:
+## Что вы освоите
+
+- Превращать вопрос с отсылкой к истории в самостоятельный поисковый запрос.
+- Ограничивать расширение формулировок и объединять выдачи через Reciprocal Rank Fusion.
+- Сравнивать поиск по исходному и расширенному запросам с учётом дополнительных вызовов и задержки.
+
+## Домашнее задание
+
+Добавьте ограниченный TTL/LRU-кеш подготовленных поисковых планов, чтобы повторный вопрос не требовал повторной подготовки. Ключ учитывает историю, версию промпта и модель; результаты поиска и готовые ответы в этот кеш не попадают.
+
+Query planner и RRF уже работают. Реализуйте новую политику кеширования по [условиям ДЗ](homework/README.md) и заполните [SUBMISSION.md](homework/SUBMISSION.md).
+
+## Проверка
+
+Нужны Java 25 и Node.js 24. Каждый блок запускается **отдельно из папки урока**.
+
+Рабочий пример:
 
 ```bash
-docker compose up -d postgres
-./mvnw spring-boot:run
-```
-
-Затем создайте ingestion artifact, опубликуйте его в pgvector и выполните /api/queries/plan, /prepare, /call или /compare по командам лекции. Для автоматических проверок:
-
-```bash
+cd lecture
 ./mvnw test
 npm ci
 npm test
-./mvnw verify -Ppgvector-it
 ```
 
-При подготовке lecture прошли **223 быстрых Java + 24 pgvector IT + 104 JS**. Полный профиль требует Docker; реальные веса не нужны контрактным fixtures. Качество настоящих моделей оценивается отдельным экспериментом с учётом дополнительных calls, retrieval и полной задержки.
+Каркас домашнего задания:
 
-В homework query planner и RRF полностью готовы. Новая задача — TTL/LRU-кеш подготовленных query plans с корректной identity и контролируемым временем. Условия и отдельные acceptance описаны в его README; фактические результаты каркаса/эталона — в VERIFICATION.
+```bash
+cd homework
+./mvnw '-Dtest=*Test,!QueryPlanCacheAcceptanceTest' test
+./mvnw -Dtest=QueryPlanCacheAcceptanceTest test
+npm ci
+npm test
+```
+
+После реализации ДЗ выполните `./mvnw test`. Для проверки полного RAG в выбранном проекте запустите `./mvnw verify -Ppgvector-it` с работающим Docker.
+
+Подготовка Ollama, индекса и запросы к новому API описаны в [полной лекции](lecture/README.md). [Результаты проверки примера](VERIFICATION.md).
+
+## Дополнительная практика
+
+Сравните DIRECT и EXPANDED на одних вопросах и заполните [бланк эксперимента](lecture/evaluation/Query-Experiment.md). Зафиксируйте найденные источники, качество ответа и полную стоимость подготовки.
+
+---
+
+[← Урок 3.2](../lesson-3.2/README.md) · [Все уроки](../../README.md#программа) · [Урок 3.4 →](../lesson-3.4/README.md)

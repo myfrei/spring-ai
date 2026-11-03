@@ -1,16 +1,62 @@
-# Урок 4.4. MCP host: remote tool → RAG → ответ
+# Урок 4.4. MCP host: инструмент → RAG → ответ
 
-- [Полная пошаговая лекция](lecture/README.md).
-- [Пустой бланк эксперимента host](lecture/evaluation/Remote-Host-Experiment.md).
-- [Самостоятельное ДЗ: circuit breaker](homework/README.md).
-- [Результаты проверки](VERIFICATION.md).
-- [Предыдущий урок 4.3](../lesson-4.3/README.md).
-- [Следующий урок5.1](../lesson-5.1/README.md).
+RepoPilot становится MCP host: получает задачу от HTTP-сервера TaskShelf, находит документацию через RAG и формирует ответ. Вы объедините эти этапы в один сценарий с проверяемым результатом каждой фазы.
 
-RepoPilot становится MCP host: получает публичную задачу через HTTP-сервер 4.3, ищет документацию в опубликованном RAG-индексе и формирует ответ. Java25, Boot4.1.2, SpringAI2.0.2, SDK2.1.0; endpoint сервера `127.0.0.1:8092/mcp`, host `127.0.0.1:8080`.
+## Материалы
 
-WORKFLOW выбирает remote getTask в Java. MODEL имеет отдельную ограниченную фазу ToolCallingAdvisor с returnDirect. Затем оба режима выполняют детерминированный retrieval и до одного финального вызова ChatClient без tools. Автоимпорт callbacks выключен; host допускает явный квалифицированный getTask с проверкой аргументов и полного результата SDK. Connection создаётся лениво; недоступный сервер не должен ломать старт приложения. Нового UI нет.
+| Материал | Ссылка |
+| --- | --- |
+| Лекция и рабочий пример | [Открыть лекцию](lecture/README.md) |
+| Домашнее задание | [Условия и каркас](homework/README.md) |
+| Тесты лекции | [MCP host](lecture/src/test/java/dev/myfrei/repopilot/mcphost/) · [HTTP-сервер](lecture/task-http-server/src/test/java/) |
+| Приёмочные тесты ДЗ | [CircuitGateAcceptanceTest](homework/src/test/java/dev/myfrei/repopilot/circuit/CircuitGateAcceptanceTest.java) |
 
-Новый host по умолчанию выключен. Для лаборатории включите `repopilot.mcp-host.enabled=true`, сохранив включённый RAG; полный запуск сервера, Ollama и опубликованного индекса приведён в лекции. При NO_EVIDENCE финального inference нет.
+## Что вы освоите
 
-В homework весь pipeline готов. Новое поведение — circuit breaker только вокруг remote gateway: CLOSED/OPEN/HALF_OPEN, cooldown, единственный probe и защита от устаревших completions. Отдельный маршрут показывает эффект policy; автоматических retries нет. Студент не переписывает MCP discovery, tool bridge или RAG.
+- Подключать удалённый MCP-инструмент с проверкой discovery, аргументов и результата.
+- Разделять выбор инструмента, поиск источников и финальную генерацию в WORKFLOW и MODEL.
+- Читать отчёт по фазам и различать недоступность сервера, ошибку данных и отсутствие релевантных источников в RAG.
+
+## Домашнее задание
+
+Добавьте circuit breaker для удалённого gateway: временно прекращайте обращения после сетевых сбоев и допускайте одну проверку восстановления. Учтите конкурентные запросы, одноразовые разрешения и поздние результаты старых обращений.
+
+MCP-клиент и RAG уже работают. Реализуйте `CircuitGate.acquire` и `complete` по [условиям ДЗ](homework/README.md), затем опишите сценарий восстановления в [SUBMISSION.md](homework/SUBMISSION.md).
+
+## Проверка
+
+Нужны Java 25 и Node.js 24. Каждый блок запускается **отдельно из папки урока**.
+
+Рабочий пример:
+
+```bash
+cd lecture
+./mvnw test
+./mvnw -f task-http-server/pom.xml verify
+npm ci
+npm test
+```
+
+Каркас домашнего задания:
+
+```bash
+cd homework
+./mvnw test
+./mvnw -Phomework test
+npm ci
+npm test
+```
+
+Профиль `-Phomework` включает приёмочные тесты новой функции. После решения выполните `./mvnw -Phomework verify`. Для полного RAG в выбранном проекте нужен Docker и `./mvnw verify -Ppgvector-it`.
+
+Составной MCP/RAG-сценарий проверяется профилем `mcp-host-it`, восстановление gateway в ДЗ — `circuit-it`. Сборка серверного JAR и необходимые параметры приведены в [лекции](lecture/README.md) и [ДЗ](homework/README.md).
+
+Запуск с HTTP-сервером, Ollama и опубликованным индексом описан в [полной лекции](lecture/README.md). [Результаты проверки примера](VERIFICATION.md).
+
+## Дополнительная практика
+
+Заполните [бланк эксперимента host](lecture/evaluation/Remote-Host-Experiment.md): проследите путь от задачи до ответа и отдельно проверьте недоступность сервера и отсутствие источников.
+
+---
+
+[← Урок 4.3](../lesson-4.3/README.md) · [Все уроки](../../README.md#программа) · [Урок 5.1 →](../lesson-5.1/README.md)

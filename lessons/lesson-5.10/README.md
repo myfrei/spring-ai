@@ -1,13 +1,64 @@
-# Урок 5.10. Финальная задача: MCP → FAIL → patch → свежий PASS
+# Урок 5.10. Финальная задача: MCP → исправление → проверка
 
-- [Полная пошаговая лекция](lecture/README.md).
-- [Бланк реального финального прогона](lecture/evaluation/Capstone-Experiment.md).
-- [Самостоятельное ДЗ: переносимый аудит](homework/README.md).
-- [Результаты проверки](VERIFICATION.md).
-- [Предыдущий урок 5.9](../lesson-5.9/README.md).
+Вы пройдёте полный сценарий Stock Room: получите задачу через MCP, воспроизведёте ошибку, подготовите правку и подтвердите результат новой Docker-проверкой. Применение patch и исполнение проверки требуют отдельных решений человека.
 
-Отдельный настоящий MCP-сервер выдаёт фиксированную задачу Stock Room. Две AI-стадии используют общий runtime Web/REPL: prepare со Skill и планом, затем readonly review. Между ними человек отдельно разрешает применение patch и новую Docker-проверку. Сервер связывает исходный FAIL, версии, факт применения, свежий PASS, чтения и MCP provenance в 15 обязательных gates.
+Финал проверяет фиксированный контракт StockLedger: резервирование товара и обработку граничных случаев.
 
-DONE относится к фиксированному StockLedger contract. Это ограниченный воспроизводимый финал, с явными человеческими решениями и состояниями INCOMPLETE/STALE. TaskShelf другого модуля не выдаётся за источник требований Stock Room.
+## Материалы
 
-В homework добавляется отдельный bounded/redacted audit export. Готовые MCP, AI loop, проверку и gate повторять не требуется.
+| Материал | Ссылка |
+| --- | --- |
+| Лекция и рабочий пример | [Открыть лекцию](lecture/README.md) |
+| Домашнее задание | [Условия и каркас](homework/README.md) |
+| Тесты лекции | [Проверки новой возможности](lecture/src/test/java/dev/myfrei/repopilot/capstone/) · [JavaScript](lecture/src/test/js/) · [MCP-сервер](lecture/capstone-task-server/src/test/java/) |
+| Приёмочные тесты ДЗ | [PortableAuditPolicyAcceptanceTest](homework/src/test/java/dev/myfrei/repopilot/auditexport/PortableAuditPolicyAcceptanceTest.java) |
+
+## Что вы освоите
+
+- Связывать импорт MCP-задачи, Skill, план и чтения кода в одном сценарии.
+- Проходить путь от исходного FAIL через одобренную правку к актуальному PASS.
+- Оценивать итоговый серверный отчёт с версиями и состояниями DONE, INCOMPLETE и STALE.
+
+## Домашнее задание
+
+Добавьте скачиваемый JSON-пакет аудита для ревью: заданный набор полей, отметки о недостающих данных и контрольную сумму. Соблюдайте бюджет полного UTF-8 документа. Пакет сохраняет исходный статус задачи и позволяет проверить целостность экспортируемых данных.
+
+Условия и критерии приёмки — в [README задания](homework/README.md). Результат оформите в [SUBMISSION.md](homework/SUBMISSION.md).
+
+## Проверка
+
+Оба блока выполняйте отдельно, начиная из папки `lesson-5.10`. Подготовка среды описана в лекции.
+
+Базовые Java- и UI-проверки рабочего примера:
+
+```bash
+cd lecture
+./mvnw test
+./mvnw -f capstone-task-server/pom.xml verify
+npm ci
+npm test
+```
+
+Базовые и приёмочные проверки домашнего задания:
+
+```bash
+cd homework
+./mvnw test
+./mvnw -f capstone-task-server/pom.xml verify
+./mvnw -Phomework verify
+npm ci
+npm test
+```
+
+Приёмочные тесты описывают новую функцию и начнут проходить после её реализации. Полный сценарий с отдельным MCP-сервером и Docker выполняйте по [инструкции лекции](lecture/README.md).
+
+[Результаты проверки примера](VERIFICATION.md).
+
+## Дополнительная практика
+
+- [Финальный сценарий Stock Room](lecture/evaluation/Capstone-Experiment.md).
+- [Одна задача через Web и REPL](lecture/evaluation/Interfaces-Experiment.md).
+
+---
+
+[← Урок 5.9](../lesson-5.9/README.md) · [Все уроки](../../README.md#программа) · Конец курса

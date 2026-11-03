@@ -1,32 +1,59 @@
-# Урок 3.4. Reranking найденных chunks
+# Урок 3.4. Reranking найденных фрагментов
 
-- [Полная пошаговая лекция и рабочий пример](lecture/README.md).
-- [Пустой бланк эксперимента](lecture/evaluation/Reranking-Experiment.md).
-- [Самостоятельное ДЗ: offline-метрики ранжирования](homework/README.md).
-- [Фактические результаты проверки](VERIFICATION.md).
-- [Предыдущий урок 3.3](../lesson-3.3/README.md).
-- [Следующий урок4.1](../lesson-4.1/README.md).
+RepoPilot получает повторное ранжирование найденных фрагментов перед сборкой контекста. Вы сравните исходный порядок, лексическую эвристику и ограниченное ранжирование chat-моделью, чтобы проверить, какие источники помогают ответить на вопрос.
 
-RepoPilot получает NONE / LEXICAL / LLM reranking после retrieval и RRF. LEXICAL — текстовая эвристика, LLM — ограниченное listwise-ранжирование chat-моделью. Отдельный cross-encoder в этом срезе не используется. Финальная модель получает только отобранные документы и исходный вопрос, проверенные отдельным RagPlanner.
+## Материалы
 
-Стек: Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17 / pgvector 0.8.1. Новый сценарий работает через JSON API `/api/reranking/prepare`, `/call`, `/compare`; UI унаследован, отдельной панели нет. Каждый lecture/homework — самостоятельный Maven-проект.
+| Материал | Ссылка |
+| --- | --- |
+| Лекция и рабочий пример | [Открыть лекцию](lecture/README.md) |
+| Домашнее задание | [Условия и каркас](homework/README.md) |
+| Тесты лекции | [Java](lecture/src/test/java/) · [JavaScript](lecture/src/test/js/) |
+| Приёмочные тесты ДЗ | [RankingMetricsAcceptanceTest](homework/src/test/java/dev/myfrei/repopilot/rankingeval/RankingMetricsAcceptanceTest.java) |
 
-Из lecture, после подготовки Ollama chat/embedding моделей:
+## Что вы освоите
+
+- Разделять первичный поиск, объединение выдач и повторное ранжирование.
+- Проверять JSON-оценки модели, ограничивать запрос и обрабатывать отказ reranker.
+- Сравнивать NONE, LEXICAL и LLM на одном наборе кандидатов, сохраняя ссылки на источники.
+
+## Домашнее задание
+
+Добавьте независимый API оценки сохранённого ранжирования: nDCG@K, RR@K и recall@K по ручной разметке. Учтите повторяющиеся документы, исходные позиции фрагментов и отсутствие положительной разметки.
+
+Reranker уже реализован. Новый evaluator работает с метаданными без вызовов модели и SQL. Контракт — в [ДЗ](homework/README.md); результаты и объяснения внесите в [SUBMISSION.md](homework/SUBMISSION.md).
+
+## Проверка
+
+Нужны Java 25 и Node.js 24. Каждый блок запускается **отдельно из папки урока**.
+
+Рабочий пример:
 
 ```bash
-docker compose up -d postgres
-./mvnw spring-boot:run
-```
-
-Затем выполните ingestion/index и rag/publish по лекции. Для автоматических проверок:
-
-```bash
+cd lecture
 ./mvnw test
 npm ci
 npm test
-./mvnw verify -Ppgvector-it
 ```
 
-Полный профиль требует Docker. Fixtures проверяют контракт без настоящих весов; качество и задержку модели исследуют отдельно. Счётчики и границы проверки приведены в VERIFICATION.
+Каркас домашнего задания:
 
-В homework база reranking готова. Новая задача — offline nDCG@K, RR@K и recall@K по явной разметке ранжирования; она не требует повторять реализацию reranker или обращаться к LLM/SQL.
+```bash
+cd homework
+./mvnw '-Dtest=*Test,!RankingMetricsAcceptanceTest' test
+./mvnw -Dtest=RankingMetricsAcceptanceTest test
+npm ci
+npm test
+```
+
+После реализации ДЗ выполните `./mvnw test`. Для проверки полного RAG в выбранном проекте запустите `./mvnw verify -Ppgvector-it` с работающим Docker.
+
+Подготовка моделей, индекса и запуск сравнения описаны в [полной лекции](lecture/README.md). [Результаты проверки примера](VERIFICATION.md).
+
+## Дополнительная практика
+
+Заполните [бланк сравнения ранжирования](lecture/evaluation/Reranking-Experiment.md). Сохраняйте одинаковые вопрос и набор кандидатов, отдельно учитывая качество, задержку и дополнительные вызовы модели.
+
+---
+
+[← Урок 3.3](../lesson-3.3/README.md) · [Все уроки](../../README.md#программа) · [Урок 4.1 →](../lesson-4.1/README.md)

@@ -1,19 +1,63 @@
-# Урок 4.3. Spring MCP server и Streamable HTTP
+# Урок 4.3. Spring MCP Server и Streamable HTTP
 
-- [Полная пошаговая лекция](lecture/README.md).
-- [Пустой бланк HTTP/MCP-эксперимента](lecture/evaluation/Mcp-Http-Experiment.md).
-- [Самостоятельное ДЗ: готовность релиза](homework/README.md).
-- [Результаты проверки](VERIFICATION.md).
-- [Предыдущий урок 4.2](../lesson-4.2/README.md).
-- [Следующий урок 4.4](../lesson-4.4/README.md).
+Вы создадите отдельный Spring MCP-сервер TaskShelf с доступом по HTTP. Инструменты, ресурс и промпт будут регистрироваться аннотациями, а клиент сможет подключаться к уже работающему процессу через Streamable HTTP.
 
-В lecture сохранена база RepoPilot 4.2. Новый `lecture/task-http-server` — независимый Spring Boot проект на Java 25, Boot 4.1.2 и Spring AI 2.0.2. Он публикует учебные listTasks/getTask, resource и prompt через Streamable HTTP `http://127.0.0.1:8092/mcp`. Модель и векторная БД для нового сервера не нужны. Protocol revision —2025-11-25, SDK —2.1.0, Inspector —0.21.2.
+## Материалы
 
-Это следующий шаг после STDIO: отдельный lifecycle сервера, Spring MCP-аннотации, явные schemas, demo bearer и Origin allowlist. Loopback/bearer/Origin решают разные задачи; пример не заменяет production authentication. Нового UI нет, протокол проверяем SDK/Inspector. Подключение к генеративному host вынесено в 4.4.
+| Материал | Ссылка |
+| --- | --- |
+| Лекция и рабочий пример | [Открыть лекцию](lecture/README.md) |
+| Домашнее задание | [Условия и каркас](homework/README.md) |
+| Тесты лекции | [HTTP/MCP-сервер](lecture/task-http-server/src/test/java/) · [RepoPilot](lecture/src/test/java/) |
+| Приёмочные тесты ДЗ | [ReleaseReadinessAcceptanceTest](homework/task-http-server/src/test/java/dev/myfrei/repopilot/readiness/ReleaseReadinessAcceptanceTest.java) |
+
+## Что вы освоите
+
+- Настраивать независимый Spring Boot MCP-сервер со Streamable HTTP.
+- Регистрировать возможности аннотациями и задавать явные схемы аргументов.
+- Проверять bearer-токен, Origin, HTTP lifecycle и протокольные ошибки через SDK и Inspector.
+
+## Домашнее задание
+
+Добавьте оценку готовности задачи к релизу: выберите актуальные результаты проверок, учтите последние попытки и различайте FAIL, UNKNOWN, отсутствие данных и конфликт. Вердикт READY должен опираться на полный набор подтверждений.
+
+Реализуйте `ReleaseReadinessPolicy.assess` в `homework/task-http-server`; новый tool и adapter предоставлены. Данные `COURSE_FIXTURE` учебные, они не подтверждают запуск CI. Заполните [SUBMISSION.md](homework/SUBMISSION.md) по [условиям ДЗ](homework/README.md).
+
+## Проверка
+
+Нужны Java 25 и Node.js 24. Каждый блок запускается **отдельно из папки урока**. HTTP-сервер — самостоятельный Maven-проект.
+
+Рабочий пример:
 
 ```bash
 cd lecture
+./mvnw test
 ./mvnw -f task-http-server/pom.xml verify
+./mvnw -f task-server/pom.xml verify
+npm ci
+npm test
 ```
 
-В homework сервер, transport, аннотации и регистрация нового getReleaseReadiness уже предоставлены. Студент реализует отдельную ReleaseReadinessPolicy: выбирает актуальные результаты проверок, различает FAIL/MISSING/UNKNOWN/CONFLICT и строит честный verdict. Данные COURSE_FIXTURE не являются доказательством запуска CI. Новые acceptance tests проверяют policy; повторять сервер лекции не требуется.
+Каркас домашнего задания:
+
+```bash
+cd homework
+./mvnw test
+./mvnw -f task-http-server/pom.xml verify
+./mvnw -f task-http-server/pom.xml -Phomework test
+./mvnw -f task-server/pom.xml verify
+npm ci
+npm test
+```
+
+Профиль `-Phomework` включает приёмочные тесты новой функции. После решения выполните `./mvnw -f task-http-server/pom.xml -Phomework verify`. Сам MCP-сервер не требует модели или БД.
+
+Для унаследованного RAG доступен `./mvnw verify -Ppgvector-it` с Docker. Запуск HTTP-сервера и Inspector описан в [полной лекции](lecture/README.md). [Результаты проверки примера](VERIFICATION.md).
+
+## Дополнительная практика
+
+Заполните [бланк HTTP/MCP-эксперимента](lecture/evaluation/Mcp-Http-Experiment.md): сравните доступ с токеном и без него, корректные вызовы и ошибки аргументов.
+
+---
+
+[← Урок 4.2](../lesson-4.2/README.md) · [Все уроки](../../README.md#программа) · [Урок 4.4 →](../lesson-4.4/README.md)
