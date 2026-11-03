@@ -1,0 +1,435 @@
+package dev.myfrei.repopilot.agent;
+
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import org.junit.jupiter.api.*;
+import org.springframework.ai.chat.messages.*;
+import org.springframework.ai.ollama.api.OllamaChatOptions;
+
+@Timeout(10)
+class AgentEngineTest {
+  @Test
+  void manualTwoToolRoundsCorrelateMessagesCommitOneWholeTurnAndAccountEachProviderResponseOnce() {
+    var model = new AgentFixtures.Model();
+    model.script.addAll(
+        List.of(
+            AgentFixtures.tool("getProjectInfo", "{}", 1),
+            AgentFixtures.tool("getTask", "{\"taskId\":\"TASK-101\"}", 2),
+            AgentFixtures.answer()));
+    var identity = new AgentFixtures.Identity();
+    var store = new AgentStore();
+    var conversation = store.createConversation();
+    var run =
+        AgentFixtures.engine(model, identity, store).run(conversation.id(), AgentFixtures.QUESTION);
+    assertThat(run.status()).isEqualTo("COMPLETED");
+    assertThat(run.stopReason()).isEqualTo("FINAL_ANSWER");
+    assertThat(run.report().modelCalls()).isEqualTo(3);
+    assertThat(run.report().toolCalls()).isEqualTo(2);
+    assertThat(run.report().executedTools()).isEqualTo(2);
+    assertThat(run.report().providerInputTokens()).isEqualTo(24);
+    assertThat(run.report().providerOutputTokens()).isEqualTo(9);
+    assertThat(identity.calls).isEqualTo(6);
+    assertThat(store.conversation(conversation.id()).turns())
+        .containsExactly(new AgentTurn(run.id(), AgentFixtures.QUESTION, run.answer()));
+    assertThat(store.conversation(conversation.id()).activeRunId()).isNull();
+    assertThat(store.run(run.id())).isEqualTo(run);
+    var messages = store.messages(run.id());
+    assertThat(messages)
+        .extracting(AgentMessage::role)
+        .containsExactly("USER", "ASSISTANT", "TOOL", "ASSISTANT", "TOOL", "ASSISTANT");
+    assertThat(messages.get(2).toolResults().getFirst().id()).isEqualTo("call-1");
+    assertThat(messages.get(4).toolResults().getFirst().id()).isEqualTo("call-2");
+    assertThat(messages.get(4).toolResults().getFirst().resultJson())
+        .contains("TASK-101", "\"id\"")
+        .doesNotContain("acceptanceCriteria");
+    assertBalanced(messages);
+    for (var prompt : model.prompts) {
+      var options = (OllamaChatOptions) prompt.getOptions();
+      assertThat(options.getNumPredict()).isEqualTo(384);
+      assertThat(options.getNumCtx()).isEqualTo(4096);
+      assertThat(options.getTemperature()).isEqualTo(0.0);
+      assertThat(options.getToolCallbacks()).hasSize(3);
+      assertThatThrownBy(() -> options.getToolCallbacks().getFirst().call("{}"))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Schema-only");
+    }
+    assertThat(model.prompts.get(1).getInstructions())
+        .anyMatch(m -> m instanceof ToolResponseMessage);
+    assertThat(
+            model.prompts.getLast().getInstructions().stream()
+                .filter(m -> m instanceof ToolResponseMessage))
+        .hasSize(2);
+    var events = store.events(run.id());
+    assertThat(events.getFirst().type()).isEqualTo("RUN_STARTED");
+    assertThat(events.getLast().type()).isEqualTo("RUN_FINISHED");
+    for (int i = 0; i < events.size(); i++) assertThat(events.get(i).seq()).isEqualTo(i + 1);
+    assertThat(AgentJson.encode(events) + AgentJson.encode(run.report()))
+        .doesNotContain(
+            "PRIVATE-QUESTION", "summary", "acceptanceCriteria", "responseData", "arguments\"");
+  }
+
+  @Test
+  void validToolBusinessErrorIsCorrelatedAndModelCanExplainItWithoutAutomaticRetry() {
+    var calls = new AtomicInteger();
+    var tool =
+        AgentFixtures.custom(
+            "lookup",
+            (args, ctx) -> {
+              calls.incrementAndGet();
+              return AgentToolResult.error("NOT_FOUND", "{\"message\":\"No match\"}");
+            });
+    var model = new AgentFixtures.Model();
+    model.script.addAll(List.of(AgentFixtures.tool("lookup", "{}", 1), AgentFixtures.answer()));
+    var store = new AgentStore();
+    var id = store.createConversation().id();
+    var run =
+        new AgentEngine(model, new AgentFixtures.Identity(), List.of(tool), store, "fixture", 4096)
+            .run(id, "Q");
+    assertThat(run.status()).isEqualTo("COMPLETED");
+    assertThat(calls).hasValue(1);
+    assertThat(run.report().successfulTools()).isZero();
+    assertThat(run.report().executedTools()).isOne();
+    assertThat(store.messages(run.id()).get(2).toolResults().getFirst().resultJson())
+        .contains("NOT_FOUND", "\"ok\":false");
+    assertBalanced(store.messages(run.id()));
+  }
+
+  @Test
+  void malformedClosedArgumentsAndUnknownToolsProduceCorrelatedErrorsWithoutExecution() {
+    var cases =
+        Map.of(
+            "{\"taskId\":\"TASK-101\",\"extra\":true}",
+            "getTask",
+            "{\"taskId\":\"TASK-101\",\"taskId\":\"TASK-101\"}",
+            "getTask",
+            "{\"taskId\":\"TASK-101\"} {}",
+            "getTask",
+            "{\"limit\":1.5}",
+            "listTasks",
+            "{\"taskId\":null}",
+            "getTask",
+            "{\"taskId\":\"TASK-999\"}",
+            "getTask",
+            "{}",
+            "readFile");
+    for (var entry : cases.entrySet()) {
+      var model = new AgentFixtures.Model();
+      model.script.add(AgentFixtures.tool(entry.getValue(), entry.getKey(), 1));
+      var store = new AgentStore();
+      var id = store.createConversation().id();
+      var run = AgentFixtures.engine(model, new AgentFixtures.Identity(), store).run(id, "Q");
+      assertThat(run.status()).isEqualTo("STOPPED");
+      assertThat(run.stopReason())
+          .isEqualTo(entry.getValue().equals("readFile") ? "TOOL_NOT_ALLOWED" : "TOOL_ARGUMENTS");
+      assertThat(run.report().toolCalls()).isOne();
+      assertThat(run.report().executedTools()).isZero();
+      assertThat(store.conversation(id).turns()).isEmpty();
+      assertThat(model.calls).isOne();
+      assertBalanced(store.messages(run.id()));
+      assertThat(store.messages(run.id()).getLast().toolResults()).hasSize(1);
+    }
+  }
+
+  @Test
+  void duplicateCallIdsAndUnsupportedCallTypesStopBeforeAppendingAnUncorrelatableAssistant() {
+    for (boolean duplicate : List.of(false, true)) {
+      var model = new AgentFixtures.Model();
+      var calls =
+          duplicate
+              ? List.of(
+                  AgentFixtures.call("getProjectInfo", "{}", 1),
+                  AgentFixtures.call("getProjectInfo", "{}", 1))
+              : List.of(new AssistantMessage.ToolCall("call-1", "shell", "getProjectInfo", "{}"));
+      model.script.add(AgentFixtures.response("", "stop", calls));
+      var store = new AgentStore();
+      var run =
+          AgentFixtures.engine(model, new AgentFixtures.Identity(), store)
+              .run(store.createConversation().id(), "Q");
+      assertThat(run.stopReason()).isEqualTo("TOOL_PROTOCOL");
+      assertThat(run.report().executedTools()).isZero();
+      assertThat(store.messages(run.id())).hasSize(1);
+    }
+  }
+
+  @Test
+  void exactToolCapAllowsEightExecutionsAndOversizedBatchIsRejectedBeforeAnyExecution() {
+    var batch = new ArrayList<AssistantMessage.ToolCall>();
+    for (int i = 1; i <= 8; i++) batch.add(AgentFixtures.call("getProjectInfo", "{}", i));
+    var model = new AgentFixtures.Model();
+    model.script.addAll(List.of(AgentFixtures.response("", "stop", batch), AgentFixtures.answer()));
+    var store = new AgentStore();
+    var run =
+        AgentFixtures.engine(model, new AgentFixtures.Identity(), store)
+            .run(store.createConversation().id(), "Q");
+    assertThat(run.status()).isEqualTo("COMPLETED");
+    assertThat(run.report().toolCalls()).isEqualTo(8);
+    assertThat(run.report().executedTools()).isEqualTo(8);
+    assertBalanced(store.messages(run.id()));
+    batch.add(AgentFixtures.call("getProjectInfo", "{}", 9));
+    var rejected = new AgentFixtures.Model();
+    rejected.script.add(AgentFixtures.response("", "stop", batch));
+    var other = new AgentStore();
+    var stopped =
+        AgentFixtures.engine(rejected, new AgentFixtures.Identity(), other)
+            .run(other.createConversation().id(), "Q");
+    assertThat(stopped.stopReason()).isEqualTo("TOOL_LIMIT");
+    assertThat(stopped.report().toolCalls()).isZero();
+    assertThat(stopped.report().executedTools()).isZero();
+    assertThat(other.messages(stopped.id())).hasSize(1);
+  }
+
+  @Test
+  void boundedModelLoopStopsAtSixAndFailedScratchNeverCommits() {
+    var model = new AgentFixtures.Model();
+    var store = new AgentStore();
+    var id = store.createConversation().id();
+    var run = AgentFixtures.engine(model, new AgentFixtures.Identity(), store).run(id, "Q");
+    assertThat(run.stopReason()).isEqualTo("MODEL_LIMIT");
+    assertThat(model.calls).isEqualTo(6);
+    assertThat(run.report().toolCalls()).isEqualTo(6);
+    assertThat(store.conversation(id).turns()).isEmpty();
+    assertBalanced(store.messages(run.id()));
+    model.script.add(AgentFixtures.answer());
+    var next =
+        AgentFixtures.engine(model, new AgentFixtures.Identity(), store).run(id, "new clean Q");
+    assertThat(next.status()).isEqualTo("COMPLETED");
+    assertThat(model.prompts.getLast().getInstructions()).hasSize(2);
+    assertThat(store.conversation(id).turns()).hasSize(1);
+  }
+
+  @Test
+  void stopRuleRunsAfterCorrelatedResultAndRemainingBatchGetsExplicitNotExecutedReplies() {
+    var contexts = new ArrayList<AgentToolContext>();
+    var tool =
+        AgentFixtures.custom(
+            "lookup",
+            (args, ctx) -> {
+              contexts.add(ctx);
+              return AgentToolResult.success("{\"value\":1}");
+            });
+    var model = new AgentFixtures.Model();
+    model.script.add(
+        AgentFixtures.response(
+            "",
+            "stop",
+            List.of(AgentFixtures.call("lookup", "{}", 1), AgentFixtures.call("lookup", "{}", 2))));
+    var store = new AgentStore();
+    var id = store.createConversation().id();
+    var seen = new ArrayList<ToolObservation>();
+    var engine =
+        new AgentEngine(model, new AgentFixtures.Identity(), List.of(tool), store, "fixture", 4096)
+            .withStopRule(
+                history -> {
+                  assertThatThrownBy(() -> history.clear())
+                      .isInstanceOf(UnsupportedOperationException.class);
+                  seen.addAll(history);
+                  return true;
+                });
+    var run = engine.run(id, "Q");
+    assertThat(run.stopReason()).isEqualTo("NO_PROGRESS");
+    assertThat(model.calls).isOne();
+    assertThat(run.report().toolCalls()).isEqualTo(2);
+    assertThat(run.report().executedTools()).isOne();
+    assertThat(contexts).containsExactly(new AgentToolContext(run.id(), id));
+    assertThat(seen).hasSize(1);
+    assertThat(seen.getFirst().argumentsHash()).hasSize(64);
+    assertBalanced(store.messages(run.id()));
+    assertThat(store.messages(run.id()).getLast().toolResults().getFirst().resultJson())
+        .contains("NOT_EXECUTED");
+    assertThat(store.conversation(id).turns()).isEmpty();
+  }
+
+  @Test
+  void contextBudgetIncludesSchemasAndResultsAndNeverCountsBlockedModelAttempts() {
+    var model = new AgentFixtures.Model();
+    var identity = new AgentFixtures.Identity();
+    var store = new AgentStore();
+    var engine =
+        new AgentEngine(
+            model,
+            identity,
+            TaskAgentTools.create(new dev.myfrei.repopilot.tasks.TaskCatalog()),
+            store,
+            "fixture",
+            700);
+    var blocked = engine.run(store.createConversation().id(), "Q");
+    assertThat(blocked.stopReason()).isEqualTo("CONTEXT_LIMIT");
+    assertThat(blocked.report().modelCalls()).isZero();
+    assertThat(model.calls).isZero();
+    assertThat(identity.calls).isZero();
+    var large =
+        AgentFixtures.custom(
+            "large",
+            (args, ctx) ->
+                AgentToolResult.success(AgentJson.encode(Map.of("data", "x".repeat(3000)))));
+    var otherModel = new AgentFixtures.Model();
+    otherModel.script.add(AgentFixtures.tool("large", "{}", 1));
+    var other = new AgentStore();
+    var run =
+        new AgentEngine(
+                otherModel, new AgentFixtures.Identity(), List.of(large), other, "fixture", 1500)
+            .run(other.createConversation().id(), "Q");
+    assertThat(run.stopReason()).isEqualTo("CONTEXT_LIMIT");
+    assertThat(otherModel.calls).isOne();
+    assertThat(run.report().executedTools()).isOne();
+    assertBalanced(other.messages(run.id()));
+  }
+
+  @Test
+  void oversizeAndInvalidToolOutputsBecomeBoundedCorrelatedFailures() {
+    for (String output : List.of("x".repeat(5000), "{\"x\":1,\"x\":2}", "{} trailing")) {
+      var tool = AgentFixtures.custom("bad", (args, ctx) -> AgentToolResult.success(output));
+      var model = new AgentFixtures.Model();
+      model.script.add(AgentFixtures.tool("bad", "{}", 1));
+      var store = new AgentStore();
+      var run =
+          new AgentEngine(
+                  model, new AgentFixtures.Identity(), List.of(tool), store, "fixture", 4096)
+              .run(store.createConversation().id(), "Q");
+      assertThat(run.stopReason()).isEqualTo("TOOL_RESULT_INVALID");
+      assertThat(run.report().executedTools()).isOne();
+      assertThat(run.report().successfulTools()).isZero();
+      String result = store.messages(run.id()).getLast().toolResults().getFirst().resultJson();
+      assertThat(AgentJson.bytes(result)).isLessThan(4096);
+      assertThat(result).contains("TOOL_RESULT_INVALID");
+      assertBalanced(store.messages(run.id()));
+    }
+  }
+
+  @Test
+  void digestGuardRunsEvenAfterProviderFailureAndAcrossToolRounds() {
+    var model = new AgentFixtures.Model();
+    model.failure = new IllegalStateException("PRIVATE-ERROR");
+    var identity = new AgentFixtures.Identity();
+    identity.values.addAll(List.of(AgentFixtures.DIGEST, "b".repeat(64)));
+    var store = new AgentStore();
+    var run =
+        AgentFixtures.engine(model, identity, store).run(store.createConversation().id(), "Q");
+    assertThat(run.stopReason()).isEqualTo("MODEL_CHANGED");
+    assertThat(identity.calls).isEqualTo(2);
+    assertThat(run.report().modelCalls()).isOne();
+    assertThat(run.report().usageComplete()).isFalse();
+    assertThat(run.report().providerInputTokens()).isNull();
+    var second = new AgentFixtures.Model();
+    var changed = new AgentFixtures.Identity();
+    changed.values.addAll(List.of(AgentFixtures.DIGEST, AgentFixtures.DIGEST, "c".repeat(64)));
+    var other = new AgentStore();
+    var stopped =
+        AgentFixtures.engine(second, changed, other).run(other.createConversation().id(), "Q");
+    assertThat(stopped.stopReason()).isEqualTo("MODEL_CHANGED");
+    assertThat(second.calls).isOne();
+    assertThat(stopped.report().toolCalls()).isOne();
+    assertBalanced(other.messages(stopped.id()));
+  }
+
+  @Test
+  void finalAnswerMustBeNonemptyStopAndDigestStableBeforeCommit() {
+    for (var response :
+        List.of(
+            AgentFixtures.response("partial", "length", List.of()),
+            AgentFixtures.response("", "stop", List.of()))) {
+      var model = new AgentFixtures.Model();
+      model.script.add(response);
+      var store = new AgentStore();
+      var id = store.createConversation().id();
+      var run = AgentFixtures.engine(model, new AgentFixtures.Identity(), store).run(id, "Q");
+      assertThat(run.stopReason()).isEqualTo("MODEL_INCOMPLETE");
+      assertThat(run.answer()).isNull();
+      assertThat(store.conversation(id).turns()).isEmpty();
+    }
+    var model = new AgentFixtures.Model();
+    model.script.add(AgentFixtures.answer());
+    var identity = new AgentFixtures.Identity();
+    identity.values.addAll(List.of(AgentFixtures.DIGEST, "b".repeat(64)));
+    var store = new AgentStore();
+    var run =
+        AgentFixtures.engine(model, identity, store).run(store.createConversation().id(), "Q");
+    assertThat(run.stopReason()).isEqualTo("MODEL_CHANGED");
+    assertThat(run.answer()).isNull();
+  }
+
+  @Test
+  void historyIsBoundedAndBudgetDropsOnlyWholeCommittedTurns() {
+    var model = new AgentFixtures.Model();
+    model.script.add(AgentFixtures.response("ANSWER-" + "x".repeat(600), "stop", List.of()));
+    var store = new AgentStore();
+    var id = store.createConversation().id();
+    var engine =
+        new AgentEngine(model, new AgentFixtures.Identity(), List.of(), store, "fixture", 1200);
+    AgentRun latest = null;
+    for (int i = 0; i < 6; i++) latest = engine.run(id, "QUESTION-" + i + "q".repeat(80));
+    assertThat(latest.status()).isEqualTo("COMPLETED");
+    assertThat(store.conversation(id).turns()).hasSize(4);
+    assertThat(latest.report().omittedHistoryTurns()).isPositive();
+    var roles =
+        model.prompts.getLast().getInstructions().stream()
+            .map(m -> m.getMessageType().name())
+            .toList();
+    assertThat(roles.getFirst()).isEqualTo("SYSTEM");
+    assertThat(roles.getLast()).isEqualTo("USER");
+    for (int i = 1; i < roles.size() - 1; i += 2) {
+      assertThat(roles.get(i)).isEqualTo("USER");
+      assertThat(roles.get(i + 1)).isEqualTo("ASSISTANT");
+    }
+  }
+
+  @Test
+  void oneActiveRunAcrossEngineCopiesAndImmutableSnapshots() {
+    var entered = new CountDownLatch(1);
+    var release = new CountDownLatch(1);
+    var model = new AgentFixtures.Model();
+    model.script.add(AgentFixtures.answer());
+    model.hook =
+        () -> {
+          entered.countDown();
+          try {
+            if (!release.await(3, TimeUnit.SECONDS)) throw new IllegalStateException();
+          } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+          }
+        };
+    var store = new AgentStore();
+    var id = store.createConversation().id();
+    var engine = AgentFixtures.engine(model, new AgentFixtures.Identity(), store);
+    try (var executor = Executors.newSingleThreadExecutor()) {
+      var future = executor.submit(() -> engine.run(id, "first"));
+      assertThat(entered.await(2, TimeUnit.SECONDS)).isTrue();
+      var snapshot = store.conversation(id);
+      assertThat(snapshot.activeRunId()).isNotNull();
+      assertThat(store.run(snapshot.activeRunId()).status()).isEqualTo("RUNNING");
+      assertThatThrownBy(() -> engine.withStopRule(history -> false).run(id, "second"))
+          .isInstanceOf(AgentProblem.class)
+          .extracting("code")
+          .isEqualTo("AGENT_BUSY");
+      release.countDown();
+      var run = future.get(3, TimeUnit.SECONDS);
+      assertThat(run.status()).isEqualTo("COMPLETED");
+      assertThat(snapshot.turns()).isEmpty();
+      assertThat(store.conversation(id).turns()).hasSize(1);
+      assertThatThrownBy(() -> store.events(run.id()).clear())
+          .isInstanceOf(UnsupportedOperationException.class);
+      assertThatThrownBy(() -> store.messages(run.id()).clear())
+          .isInstanceOf(UnsupportedOperationException.class);
+      assertThat(model.calls).isOne();
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    } finally {
+      release.countDown();
+    }
+  }
+
+  static void assertBalanced(List<AgentMessage> messages) {
+    var calls = new LinkedHashMap<String, String>();
+    var results = new LinkedHashMap<String, String>();
+    for (var message : messages) {
+      message.toolCalls().forEach(call -> assertThat(calls.put(call.id(), call.name())).isNull());
+      message
+          .toolResults()
+          .forEach(reply -> assertThat(results.put(reply.id(), reply.name())).isNull());
+    }
+    assertThat(results).isEqualTo(calls);
+  }
+}
