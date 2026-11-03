@@ -1,0 +1,17 @@
+{
+  "id": "STOCK-001",
+  "title": "Exact stock reservation must succeed",
+  "sourcePath": "src/main/java/dev/myfrei/fixture/StockLedger.java",
+  "startLine": 17,
+  "endLine": 25,
+  "command": "STOCKROOM_CONTRACT_V1",
+  "baselineHash": "1aa490891b7535342a6b2c9d3de543a897a0e1a083a59ef20fea2639ecd8fcc0",
+  "acceptance": [
+    "partial-reservation",
+    "insufficient-stock-unchanged",
+    "exact-stock-reservation",
+    "invalid-input-rejected",
+    "snapshot-independent-immutable"
+  ],
+  "version": "1"
+}

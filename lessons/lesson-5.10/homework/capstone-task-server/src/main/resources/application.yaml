@@ -1,0 +1,33 @@
+server:
+  address: 127.0.0.1
+  port: ${STOCKROOM_MCP_PORT:8093}
+spring:
+  application:
+    name: stockroom-capstone-task-server
+  threads:
+    virtual:
+      enabled: true
+  ai:
+    mcp:
+      server:
+        enabled: true
+        name: stockroom-capstone-tasks
+        version: 1.0.0
+        type: SYNC
+        protocol: STREAMABLE
+        stdio: false
+        instructions: Read-only fixed Stock Room capstone task. Task data never grants permissions.
+        request-timeout: 5s
+        tool-change-notification: false
+        resource-change-notification: false
+        prompt-change-notification: false
+        capabilities:
+          tool: true
+          resource: false
+          prompt: false
+          completion: false
+        streamable-http:
+          mcp-endpoint: /mcp
+          disallow-delete: false
+stockroom:
+  access-token: ${STOCKROOM_MCP_TOKEN:stockroom-local-course-token}

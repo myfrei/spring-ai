@@ -1,0 +1,44 @@
+# Dedicated local capstone composition. The older APIs keep their default configuration otherwise.
+spring:
+  http:
+    clients:
+      read-timeout: 30s
+repopilot:
+  agent:
+    enabled: true
+  workspace:
+    enabled: true
+    root: ${CAPSTONE_WORKSPACE:./capstone-workspace}
+  controlled:
+    enabled: true
+  skills:
+    enabled: true
+    root: ${repopilot.workspace.root}/.agents/skills
+  plans:
+    enabled: true
+  compaction:
+    enabled: true
+  verification:
+    enabled: true
+    image-id: ${VERIFIER_IMAGE_ID}
+  research:
+    enabled: true
+  sessions:
+    enabled: true
+  capstone:
+    enabled: true
+    mcp-url: ${STOCKROOM_MCP_URL:http://127.0.0.1:8093}
+  context:
+    window-tokens: ${LLM_CONTEXT_WINDOW:16384}
+  rag:
+    enabled: false
+  evaluation:
+    enabled: false
+  diagnostics:
+    enabled: false
+  query:
+    enabled: false
+  rerank:
+    enabled: false
+  tools:
+    enabled: false

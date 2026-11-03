@@ -1,0 +1,15 @@
+target/
+.idea/
+.vscode/
+*.class
+config/
+credentials*
+.env*
+*.pem
+*.key
+*.p12
+data/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
