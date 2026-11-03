@@ -1,0 +1,15 @@
+{
+  "name": "repopilot-lesson-2-4-homework-ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "test": "node --test src/test/js/sse-parser.test.mjs src/test/js/stream-api.test.mjs src/test/js/chat-controller.test.mjs src/test/js/ui.test.mjs src/test/js/conversations.test.mjs src/test/js/context.test.mjs src/test/js/ingestion.test.mjs src/test/js/rag.test.mjs src/test/js/evaluation.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "27.4.0"
+  }
+}

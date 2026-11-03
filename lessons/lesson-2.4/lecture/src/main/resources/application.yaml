@@ -1,0 +1,77 @@
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+  application:
+    name: repopilot-lesson-2-4
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    async:
+      request-timeout: 100s
+  ai:
+    model:
+      chat: ollama
+      embedding: ollama
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      chat:
+        model: ${OLLAMA_CHAT_MODEL:qwen2.5:3b}
+        temperature: 0.2
+        num-predict: ${LLM_MAX_OUTPUT:256}
+        num-ctx: ${LLM_CONTEXT_WINDOW:4096}
+      embedding:
+        model: ${OLLAMA_EMBEDDING_MODEL:embeddinggemma:300m}
+        truncate: false
+        num-ctx: 2048
+    retry:
+      max-attempts: 0
+  http:
+    clients:
+      imperative:
+        factory: jdk
+      connect-timeout: 3s
+      read-timeout: 120s
+      reactive:
+        connector: reactor
+
+server:
+  address: 127.0.0.1
+  port: ${PORT:8080}
+
+repopilot:
+  system-prompt: >-
+    Ты RepoPilot, помощник Java-разработчика. Отвечай по-русски, кратко и по делу.
+    Если данных о проекте недостаточно, скажи об этом и попроси уточнение.
+
+  stream:
+    idle-timeout: 30s
+    max-duration: 90s
+    heartbeat: 10s
+
+  history:
+    database: ${REPOPILOT_DATABASE:./data/repopilot.db}
+    max-messages: 7
+
+  context:
+    window-tokens: ${LLM_CONTEXT_WINDOW:4096}
+    output-reserve: ${LLM_MAX_OUTPUT:256}
+    safety-margin: 256
+
+  ingestion:
+    index-file: ${REPOPILOT_INDEX_FILE:./data/ingestion/index.json}
+    dimensions: ${OLLAMA_EMBEDDING_DIMENSIONS:768}
+    batch-size: 8
+
+  rag:
+    enabled: true
+    workspace: taskshelf
+    jdbc-url: ${RAG_JDBC_URL:jdbc:postgresql://localhost:5433/repopilot}
+    username: ${RAG_DB_USER:repopilot}
+    password: ${RAG_DB_PASSWORD:course_local}
+
+  evaluation:
+    enabled: true
+    directory: ${REPOPILOT_EVALUATION_DIR:./data/evaluation}

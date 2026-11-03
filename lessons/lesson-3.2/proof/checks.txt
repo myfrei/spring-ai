@@ -1,0 +1,8 @@
+2026-10-26: final verification
+lecture mvnw -o verify -Ppgvector-it: 200 fast Java + 18 pgvector IT; no failures/errors/skips
+lecture npm test: 104/104
+homework baseline *Test excluding acceptance: 200/200
+homework npm test:104/104
+homework acceptance TODO:7 red (1 failure,6 errors)
+temporary DocumentScope-only solution:207 fast Java +18 pgvector IT; no failures/errors/skips
+acceptance SHA256:a6cdea5fe5a526880441c2a27b20633002083cd4869639957de9c4b6f4baff01

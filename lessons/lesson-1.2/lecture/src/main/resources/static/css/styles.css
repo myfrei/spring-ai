@@ -1,0 +1,59 @@
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172c35; background: #f5f7f6; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, textarea { font: inherit; }
+[hidden] { display: none !important; }
+.shell { max-width: 1040px; margin: 0 auto; padding: 0 40px; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 28px 0; border-bottom: 1px solid #dde5e2; }
+.brand { display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 750; text-decoration: none; color: inherit; letter-spacing: -.6px; }
+.brand-icon { position: relative; background: #193e36; color: #fff; width: 37px; height: 37px; border-radius: 11px; padding: 7px 10px; font-size: 20px; }
+.brand-icon span { position: absolute; right: 3px; top: 2px; font-size: 14px; color: #b9edb4; }
+.badge { display: inline-flex; align-items: center; gap: 7px; background: #e9f1ec; color: #355c46; border-radius: 20px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.dot { width: 6px; height: 6px; background: #3a8058; border-radius: 50%; }
+main { padding-top: 47px; }
+.eyebrow { font-size: 10px; font-weight: 750; letter-spacing: 2px; color: #567264; margin: 0 0 15px; }
+h1 { font-size: clamp(31px, 5vw, 45px); line-height: 1.15; letter-spacing: -1.8px; margin: 0 0 14px; }
+.description { max-width: 560px; font-size: 14px; line-height: 1.65; color: #63736e; margin: 0; }
+.chat-card { margin-top: 30px; background: white; border: 1px solid #dce5df; border-radius: 17px; box-shadow: 0 8px 28px #193c3005; overflow: hidden; }
+.conversation-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 18px 24px; border-bottom: 1px solid #ecf0ed; }
+.conversation-heading h2 { font-size: 13px; margin: 0; }
+#status { font-size: 11px; color: #63736e; margin: 0; }
+.empty-state { padding: 38px 24px 34px; text-align: center; }
+.empty-icon { display: inline-block; background: #f0f5f1; color: #5d7b68; padding: 10px; border-radius: 12px; font: 20px monospace; }
+.empty-state h3 { margin: 14px 0 7px; font-size: 15px; }
+.empty-state p { font-size: 12px; color: #6c7c75; margin: 0; }
+.messages { list-style: none; padding: 0; margin: 0; max-height: 460px; overflow-y: auto; }
+.message { padding: 20px 24px; border-bottom: 1px solid #eff2ef; }
+.message-user { background: #f7faf8; }
+.message-role { display: block; margin-bottom: 8px; font-size: 10px; letter-spacing: .8px; text-transform: uppercase; font-weight: 700; color: #527365; }
+.message pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.75 ui-monospace, SFMono-Regular, Consolas, monospace; }
+.composer { padding: 21px 24px; }
+.composer label { display: block; font-size: 12px; font-weight: 650; margin-bottom: 10px; }
+textarea { width: 100%; padding: 12px 13px; resize: vertical; min-height: 86px; border: 1px solid #cdd9d1; border-radius: 8px; font-size: 13px; line-height: 1.5; color: #243a30; background: #fff; }
+textarea::placeholder { color: #8b9890; }
+textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #b2d8c2; outline-offset: 3px; }
+textarea:disabled { background: #f6f8f6; }
+.composer-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 12px; }
+#input-hint, #character-count { font-size: 10px; color: #6f7e76; }
+.send-controls { display: flex; align-items: center; gap: 16px; }
+button { cursor: pointer; border: 0; border-radius: 8px; padding: 11px 17px; color: white; background: #214d3c; font-size: 12px; font-weight: 650; }
+button:hover { background: #173c2d; }
+button:disabled { cursor: wait; opacity: .55; }
+button span { padding-left: 9px; }
+.error-box { margin: 18px 24px 0; border: 1px solid #edd8d2; border-radius: 9px; padding: 13px; background: #fff8f6; }
+#error-message { font-size: 12px; line-height: 1.5; color: #8d3f32; margin: 0; white-space: pre-wrap; }
+.retry-button { margin-top: 10px; background: #7c4539; }
+.footnote { text-align: center; font-size: 10px; color: #7a877f; margin: 15px 0 38px; }
+.footer { display: flex; justify-content: space-between; padding: 19px 0 24px; border-top: 1px solid #dde5e2; font-size: 10px; color: #829087; }
+@media (max-width: 600px) {
+  .shell { padding: 0 17px; }
+  .header { padding: 18px 0; }
+  .brand { font-size: 18px; }
+  .badge { font-size: 10px; padding: 7px 9px; }
+  main { padding-top: 30px; }
+  .conversation-heading, .message, .composer { padding: 17px; }
+  .composer-footer { align-items: flex-end; }
+  #input-hint { max-width: 95px; line-height: 1.5; }
+  .send-controls { gap: 10px; }
+  .footer { gap: 16px; font-size: 9px; }
+}

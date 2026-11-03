@@ -1,0 +1,10 @@
+logging:
+  level:
+    org.springframework.ai.retry.autoconfigure: ERROR
+
+repopilot:
+  history:
+    database: ${java.io.tmpdir}/repopilot-test-${random.uuid}.db
+
+  ingestion:
+    index-file: ${java.io.tmpdir}/repopilot-index-${random.uuid}.json

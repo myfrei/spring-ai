@@ -1,0 +1,15 @@
+{
+  "name": "repopilot-lesson-1-2-homework-ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "test": "node --test src/test/js/chat-api.test.mjs src/test/js/chat-controller.test.mjs src/test/js/ui.test.mjs src/test/js/draft-acceptance.test.mjs src/test/js/draft-binding.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "27.4.0"
+  }
+}

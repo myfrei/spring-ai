@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: repopilot-lesson-1-3
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    async:
+      request-timeout: 100s
+  ai:
+    model:
+      chat: ollama
+      embedding: none
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: never
+      chat:
+        model: ${OLLAMA_CHAT_MODEL:qwen2.5:3b}
+        temperature: 0.2
+        num-predict: 256
+    retry:
+      max-attempts: 0
+  http:
+    clients:
+      imperative:
+        factory: jdk
+      connect-timeout: 3s
+      read-timeout: 120s
+      reactive:
+        connector: reactor
+
+server:
+  address: 127.0.0.1
+  port: ${PORT:8080}
+
+repopilot:
+  system-prompt: >-
+    Ты RepoPilot, помощник Java-разработчика. Отвечай по-русски, кратко и по делу.
+    Если данных о проекте недостаточно, скажи об этом и попроси уточнение.
+
+  stream:
+    idle-timeout: 30s
+    max-duration: 90s
+    heartbeat: 10s
