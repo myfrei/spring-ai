@@ -1,6 +1,6 @@
 # ДЗ 1.2. Устойчивый браузерный черновик
 
-[Лекция](../lecture/README.md) · [Материалы урока](../README.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/js/draft-acceptance.test.mjs) · [Отчёт по ДЗ](SUBMISSION.md)
 
 ## Чем задание отличается от лекции
 
@@ -40,7 +40,7 @@ npm test
 node --test src/test/js/draft-acceptance.test.mjs
 ```
 
-Обычные UI/API regression-тесты сохранены. Новые шесть acceptance-сценариев проверяют versioned storage, запрет oversized/non-string, отказ storage, compare-and-clear, reload и сохранение вопроса после ошибки. В исходном каркасе новая часть красная, Java-база и старый UI зелёные. Дополнительная regression-проверка готового binding подтверждает, что даже исключение при доступе к getter localStorage не ломает отправку вопроса. В каркасе 25 из 31 JS зелёные и шесть acceptance красные; во временном эталоне все 31 JS проходят без изменения тестов.
+Обычные UI/API regression-тесты проверяют готовую основу. Приёмочные сценарии охватывают versioned storage, запрет oversized/non-string, отказ storage, compare-and-clear, reload и сохранение вопроса после ошибки. Дополнительная regression-проверка готового binding подтверждает, что даже исключение при доступе к getter localStorage не ломает отправку вопроса. Реализуйте методы draft-store.js, затем выполните приёмочные проверки и весь набор Java/JavaScript без изменения условий тестов.
 
 ## Ручная проверка
 

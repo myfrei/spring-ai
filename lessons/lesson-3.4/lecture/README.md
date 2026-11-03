@@ -1,16 +1,16 @@
 # Урок 3.4. Reranking: какие chunks попадут в ответ
 
-[Материалы урока](../README.md) · [Предыдущая лекция 3.3](../../lesson-3.3/lecture/README.md) · [Домашнее задание](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 3.3](../../lesson-3.3/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Стек: Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17 / pgvector 0.8.1. RepoPilot продолжает работать с корпусом вымышленного Java-сервиса TaskShelf.
+Стек: Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17 / pgvector 0.8.1. RepoPilot продолжает работать с корпусом вымышленного Java-сервиса TaskShelf.
 
 ## Результат занятия
 
-В 3.3 мы научились искать по нескольким формулировкам и объединять выдачи через RRF. Теперь добавим отдельный этап: оценим уже найденных кандидатов относительно исходного вопроса и выберем порядок передачи в финальный RAG prompt.
+В 3.3 вы научились искать по нескольким формулировкам и объединять выдачи через RRF. Теперь добавьте отдельный этап: оцените уже найденных кандидатов относительно исходного вопроса и выберите порядок передачи в финальный RAG prompt.
 
 Сравним три режима: NONE сохраняет baseline; LEXICAL использует простую текстовую эвристику; LLM просит локальную chat-модель оценить ограниченный список кандидатов. Новый сценарий доступен через `/api/reranking/prepare`, `/call` и `/compare`. Унаследованный UI продолжает работать, отдельной панели reranking нет. Новые маршруты возвращают JSON, а не SSE.
 
-Мы не обещаем, что LLM reranking повысит качество. Он может ошибиться, поддаться инструкции внутри документа или потратить больше времени, чем принести пользы. На занятии проверяем границы механизма и собираем воспроизводимый эксперимент; реальные ответы и оценки записываем в [Reranking-Experiment.md](evaluation/Reranking-Experiment.md).
+Проверьте, повысит ли LLM reranking качество в вашем эксперименте. Он может ошибиться, поддаться инструкции внутри документа или потратить больше времени, чем принести пользы. Исследуйте границы механизма и запишите реальные ответы и оценки в [Reranking-Experiment.md](evaluation/Reranking-Experiment.md).
 
 Ориентир на два часа: роли этапов 15 минут, snapshot и интерфейс 20, эвристика 15, structured LLM и guards 30, интеграция/API 20, проверки и эксперимент 20. Прогон настоящих моделей требует отдельного времени.
 
@@ -458,7 +458,7 @@ repopilot:
     prompt-version: listwise-v1
 ```
 
-При отключённом query или RAG новый API также отключится, не требуя отсутствующие зависимости. Версия rerank prompt — явный контракт автора: при изменении инструкции обновляйте версию и фиксируйте Git revision эксперимента. Она не вычисляется автоматически из всех строк Java-кода.
+При отключённом query или RAG новый API также отключится, не требуя отсутствующие зависимости. Версия rerank prompt — явная часть контракта приложения: при изменении инструкции обновляйте версию и фиксируйте Git revision эксперимента. Она не вычисляется автоматически из всех строк Java-кода.
 
 Три адаптера контроллера:
 
@@ -595,7 +595,7 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Полный профиль требует Docker и использует реальный PostgreSQL/pgvector с локальными HTTP-fixtures вместо настоящих весов. Фактические результаты, количества проверок и ограничения приведены в [VERIFICATION.md](../VERIFICATION.md). В этой лекции числа не подменяют отчёт последнего прогона.
+Полный профиль требует Docker и использует реальный PostgreSQL/pgvector с локальными HTTP-fixtures вместо настоящих весов. Он проверяет SQL и взаимодействие компонентов; качество настоящей модели исследуйте отдельно. [Результаты проверки примера](../VERIFICATION.md).
 
 Проверьте несколько разных контрактов:
 
@@ -605,7 +605,7 @@ npm test
 4. Pipeline: candidates до final budget, исходный вопрос в main prompt, отсутствие повторного retrieval у snapshot advisor, корректные S-метки.
 5. HTTP/pgvector: реальный transport options, shared comparison snapshot/costs, input/errors, NO_EVIDENCE.
 
-Для локального разбора новых слоёв доступны [RerankServiceTest](src/test/java/dev/myfrei/repopilot/rerank/RerankServiceTest.java), [StrictRerankScoresTest](src/test/java/dev/myfrei/repopilot/rerank/StrictRerankScoresTest.java), [SpringRerankModelTest](src/test/java/dev/myfrei/repopilot/rerank/SpringRerankModelTest.java), [RerankPipelineTest](src/test/java/dev/myfrei/repopilot/rerank/RerankPipelineTest.java) и [RerankConfigurationAndRequestTest](src/test/java/dev/myfrei/repopilot/rerank/RerankConfigurationAndRequestTest.java). Настоящий transport/SQL-путь проверяется общим [PgVectorRagIT](src/test/java/dev/myfrei/repopilot/rag/PgVectorRagIT.java). Числа и итоговый статус берите из VERIFICATION, а не из ожидаемого количества тестовых методов.
+Для локального разбора новых слоёв доступны [RerankServiceTest](src/test/java/dev/myfrei/repopilot/rerank/RerankServiceTest.java), [StrictRerankScoresTest](src/test/java/dev/myfrei/repopilot/rerank/StrictRerankScoresTest.java), [SpringRerankModelTest](src/test/java/dev/myfrei/repopilot/rerank/SpringRerankModelTest.java), [RerankPipelineTest](src/test/java/dev/myfrei/repopilot/rerank/RerankPipelineTest.java) и [RerankConfigurationAndRequestTest](src/test/java/dev/myfrei/repopilot/rerank/RerankConfigurationAndRequestTest.java). Настоящий transport/SQL-путь проверяется общим [PgVectorRagIT](src/test/java/dev/myfrei/repopilot/rag/PgVectorRagIT.java).
 
 После зелёных контрактов проведите отдельный эксперимент с настоящей моделью. Проверьте raw source, корректность факта и цитаты, стоимость всех этапов и случаи, где reranker ухудшил результат. Fixtures не дают оценки faithfulness и не доказывают полезность локальной qwen2.5.
 
@@ -631,7 +631,7 @@ npm test
 
 В [homework](../homework/README.md) весь reranker этой лекции уже готов. Новая задача — собственная policy расчёта nDCG@K, RR@K и recall@K по явно размеченному наблюдению. Она работает без SQL/LLM через новый `POST /api/ranking/evaluate` и не требует повторять lexical/listwise код.
 
-Реализуется только `RankingMetrics.evaluate(RankingObservation)`. Готовы API, ограничения DTO и отдельные acceptance. Полный контракт и путь к TODO приведены в README задания; результаты каркаса/эталона — в VERIFICATION.
+Реализуйте только `RankingMetrics.evaluate(RankingObservation)`. API, ограничения DTO и отдельные acceptance уже готовы. Полный контракт и путь к TODO найдёте в [README задания](../homework/README.md).
 
 Здесь relevanceByDocument размечает логические **document IDs** с grades0..3. rankedDocumentIds описывает исходные chunk slots: два chunks одного документа повторяют его ID. Повтор занимает место, но gain получает только первое вхождение. Нельзя сделать distinct до cutoff и заполнить освободившееся место следующим документом. Это объявленная конвенция нашего упражнения, а не универсальное поведение всех ranking benchmarks.
 

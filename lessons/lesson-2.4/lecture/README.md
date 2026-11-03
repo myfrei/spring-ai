@@ -1,5 +1,7 @@
 # Урок 2.4. Сравнение CHAT, FULL_CONTEXT и RAG
 
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/evaluation/) · [Все уроки](../../../README.md#программа)
+
 Мы уже умеем отправлять вопросы локальной LLM, прикладывать весь корпус и искать отдельные чанки. Теперь RepoPilot должен помочь выбрать стратегию на основании воспроизводимого эксперимента. Итог занятия — исполнитель сравнительных прогонов, исходные JSON-результаты, ручные оценки качества и экспорт Markdown-отчёта.
 
 - [Каркас домашнего задания](../homework/README.md).
@@ -7,7 +9,7 @@
 - [Техническая проверка и ограничения](../VERIFICATION.md).
 - [Предыдущий урок 2.3](../../lesson-2.3/README.md).
 
-Дата проверки: **2026-10-25**. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11 / Wrapper 3.3.4. SQLite JDBC 3.53.4.0; PostgreSQL JDBC 42.7.14; pgvector/pgvector:0.8.1-pg17; Testcontainers 2.0.5. Node 24 и jsdom 27.4.0 для UI-тестов. Новых библиотек относительно 2.3 нет.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11 / Wrapper 3.3.4. SQLite JDBC 3.53.4.0; PostgreSQL JDBC 42.7.14; pgvector/pgvector:0.8.1-pg17; Testcontainers 2.0.5. Node 24 и jsdom 27.4.0 для UI-тестов. Новых библиотек относительно 2.3 нет.
 
 ## 1. Что получим
 
@@ -730,7 +732,7 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Проверено: **171 Java unit/HTTP, 13 pgvector integration и 96 JavaScript**. Все 280 сценариев проходят без skipped. Обычный test не требует Docker; профиль pgvector-it требует настоящий daemon и отдельный временный контейнер.
+Обычный test не требует Docker; профиль pgvector-it требует настоящий daemon и отдельный временный контейнер. Выполните Java- и UI-проверки, а затем отдельно проверьте интеграцию с PostgreSQL.
 
 Новые тесты проверяют:
 
@@ -744,7 +746,7 @@ npm test
 - Все три pipeline с настоящим PostgreSQL, query embedding и QuestionAnswerAdvisor.
 - UI literal text, блокировки, polling, ручные оценки, export и гонку restore.
 
-Синтетический HTTP-стенд возвращает заранее заданный текст и vectors. Успешный тест доказывает контракт, а не семантическое качество qwen/EmbeddingGemma. Настоящие веса в техническом прогоне не загружались.
+Синтетический HTTP-стенд возвращает заранее заданный текст и vectors. Успешный тест доказывает контракт, а не семантическое качество qwen/EmbeddingGemma. Для выводов о качестве выполните эксперимент с настоящими весами и сохраните исходные ответы и ручные оценки.
 
 ## 21. Проводим настоящий эксперимент
 
@@ -789,7 +791,7 @@ npm test
 
 Реализуйте только [PairedRunComparator.compare](../homework/src/main/java/dev/myfrei/repopilot/homework/PairedRunComparator.java). Сопоставляйте строки по caseId + repetition в выбранном режиме, проверяйте совместимость условий и работайте с объединением ключей. Явно показывайте непарные/неоценённые результаты и execution regressions. Любое ухудшение answer или citation не превращайте в победу из-за улучшения другой оси. Delta времени допустима только для двух COMPLETED; отчёт не вызывает модель и не меняет исходные runs.
 
-Готовый `GET /api/evaluation/pairs?baseline=...&candidate=...&mode=RAG` читает runs из RunStore. [Шесть новых acceptance-проверок](../homework/src/test/java/dev/myfrei/repopilot/homework/PairedRegressionHomeworkAcceptanceTest.java) включают контрпример: средняя оценка выросла, но отдельный case регрессировал. По [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **171 быстрых Java + 96 JS** зелёные, **6 новых Java** сначала красные. Во временном эталоне с заменой только comparator проходят **177 быстрых Java + 13 pgvector IT + 96 JS**, тесты не менялись; IT выполнены с Docker.
+Готовый `GET /api/evaluation/pairs?baseline=...&candidate=...&mode=RAG` читает runs из RunStore. [Приёмочные проверки](../homework/src/test/java/dev/myfrei/repopilot/homework/PairedRegressionHomeworkAcceptanceTest.java) включают контрпример: средняя оценка выросла, но отдельный case регрессировал. Реализуйте comparator, проверьте этот случай и выполните полный набор вместе с базовыми Java/JavaScript и SQL-интеграцией. Описание проверок — в [VERIFICATION](../VERIFICATION.md).
 
 Выполните `./mvnw test`, `npm test` и `./mvnw verify -Ppgvector-it` из homework. Создайте два сопоставимых DEV-run, внесите ручные оценки и заполните [SUBMISSION](../homework/SUBMISSION.md): какие строки улучшились/ухудшились и что осталось непарным. HOLDOUT не используйте для очередного выбора threshold. Настоящие выводы о качестве требуют реальных моделей и оценки ответов, fixtures доказывают только алгоритм отчёта.
 

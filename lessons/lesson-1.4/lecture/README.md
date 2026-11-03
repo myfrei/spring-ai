@@ -1,8 +1,8 @@
 # Урок 1.4. Conversation, память модели и история в SQLite
 
-[Материалы урока](../README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.3/lecture/README.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/conversation/) · [Все уроки](../../../README.md#программа) · [Проверки примера](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.3/lecture/README.md)
 
-Дата сверки: 2026-10-25. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. Для UI-тестов — Node.js 24 и jsdom 27.4.0.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. Для UI-тестов — Node.js 24 и jsdom 27.4.0.
 
 ## Результат занятия
 
@@ -1051,7 +1051,7 @@ npm ci
 npm test
 ```
 
-Рабочий пример: **79 Java- и 60 JavaScript-проверок**. 53 Java-сценария streaming/обычного чата сохранены из 1.3. Новые проверки:
+Выполните проверки обычного и потокового чата вместе с новыми сценариями диалогов, SQLite и памяти:
 
 | Набор | Количество | Что подтверждает |
 | --- | --- | --- |
@@ -1062,7 +1062,7 @@ npm test
 | ConversationHttpIntegrationTest | 6 | Boot → SQLite → advisor → Ollama stub → SSE, фактический состав prompt и отключение |
 | conversations.test.mjs | 15 | Список/создание/выбор, загрузка, статусы, маршруты, ошибки, storage и безопасный DOM |
 
-В прежних UI-тестах осознанно обновлён контракт retry: новая попытка представляет новую пару user/assistant. Проверки parser и transport сохранены.
+Контракт retry в UI: новая попытка представляет новую пару user/assistant. Тесты проверяют это поведение вместе с parser и transport.
 
 Отдельные команды:
 
@@ -1074,7 +1074,7 @@ node --test src/test/js/conversations.test.mjs
 
 HTTP-тест проверяет реальный исходящий JSON, а не только вызов mock-advisor. Он подтверждает передачу истории A в A, отсутствие A в B, вытеснение старой пары из prompt без удаления истории и пропуск failed-попытки.
 
-Проверки не требуют скачанных весов. Реальная LLM в среде автора не запускалась. Выполненные проверки и пределы — в [VERIFICATION.md](../VERIFICATION.md).
+Проверки не требуют скачанных весов. Они подтверждают состав prompt и работу истории, но не качество генерации настоящей LLM. Проверьте его отдельно на своей модели; границы автоматических проверок описаны в [VERIFICATION.md](../VERIFICATION.md).
 
 ## 18. Типичные ошибки и ограничения
 
@@ -1098,7 +1098,7 @@ HTTP-тест проверяет реальный исходящий JSON, а н
 
 Реализуйте только [HistorySearch.find](../homework/src/main/java/dev/myfrei/repopilot/conversation/HistorySearch.java). Готовый `GET /api/conversations/{id}/search?q=...&limit=10` передаёт snapshot в вашу policy. Нужны буквальный поиск по question/answer после Unicode NFC и lower-case с Locale.ROOT, изоляция conversationId, только terminal-статусы и порядок от большего turn ID к меньшему. Сначала фильтруйте, затем применяйте limit; верните неизменяемый результат и не меняйте исходный snapshot.
 
-Новые [policy acceptance](../homework/src/test/java/dev/myfrei/repopilot/conversation/HistorySearchAcceptanceTest.java) и [HTTP acceptance](../homework/src/test/java/dev/myfrei/repopilot/conversation/HistorySearchHttpAcceptanceTest.java) проверяют Unicode, буквальные спецсимволы, изоляцию, limit, настоящий временный SQLite и неизменность memory window. По [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **79 Java + 60 JS** зелёные, **8 новых Java** сначала красные. Во временном эталоне с заменой только search policy проходят **87 Java + 60 JS**, тесты не менялись.
+Новые [policy acceptance](../homework/src/test/java/dev/myfrei/repopilot/conversation/HistorySearchAcceptanceTest.java) и [HTTP acceptance](../homework/src/test/java/dev/myfrei/repopilot/conversation/HistorySearchHttpAcceptanceTest.java) проверяют Unicode, буквальные спецсимволы, изоляцию, limit, настоящий временный SQLite и неизменность memory window. Реализуйте search policy и выполните новые проверки вместе с базовыми сценариями чата и диалогов. Их состав описан в [VERIFICATION](../VERIFICATION.md).
 
 После `./mvnw test` и `npm test` из homework создайте два диалога, найдите старую реплику и проверьте отсутствие чужих результатов. Заполните [SUBMISSION](../homework/SUBMISSION.md), отдельно показав журнал, поисковую выдачу и окно памяти. Поиск snapshot рассчитан на небольшой локальный журнал.
 
@@ -1126,4 +1126,3 @@ HTTP-тест проверяет реальный исходящий JSON, а н
 - [Reactor: Using Resources and the Finally Block](https://projectreactor.io/docs/core/release/reference/coreFeatures/error-handling.html) — жизненный цикл ресурсов в реактивной цепочке.
 
 В уроке 2.1 будем управлять контекстом и сравнивать полный контекст с поиском по документам. Сохранённая история и набор контрольных вопросов дадут основу для измерений.
-

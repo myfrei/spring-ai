@@ -1,8 +1,8 @@
 # ДЗ4.3. Готовность задачи по результатам проверок
 
-[Лекция](../lecture/README.md) · [Материалы](../README.md) · [Проверки](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](task-http-server/src/test/java/dev/myfrei/repopilot/readiness/ReleaseReadinessAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md) · [Проверки примера](../VERIFICATION.md)
 
-База лекции уже реализована: RepoPilot, отдельный STDIO-сервер и Spring MCP Streamable HTTP-сервер с tools/resource/prompt, Bearer и проверкой Origin. Новое приращение — детерминированная оценка готовности задачи по metadata проверок. Повторять настройку транспорта и регистрацию базовых tools не требуется.
+База лекции уже реализована: RepoPilot, отдельный STDIO-сервер и Spring MCP Streamable HTTP-сервер с tools/resource/prompt, Bearer и проверкой Origin. Добавьте детерминированную оценку готовности задачи по metadata проверок. Используйте готовый транспорт и базовые tools, чтобы сосредоточиться на новой политике оценки.
 
 Единственный TODO — `ReleaseReadinessPolicy.assess` в `task-http-server/src/main/java/dev/myfrei/repopilot/readiness/`. Adapter, закрытая schema, fixture, DTO и валидация предоставлены. LLM не участвует в вынесении вердикта.
 

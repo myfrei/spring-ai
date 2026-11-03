@@ -1,12 +1,12 @@
 # Урок 4.1. Java tools: от workflow к вызовам модели
 
-[Материалы урока](../README.md) · [Предыдущая лекция 3.4](../../lesson-3.4/lecture/README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 3.4](../../lesson-3.4/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama. Новый сценарий — JSON API; отдельной панели UI нет.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama. Новый сценарий — JSON API; отдельной панели UI нет.
 
 ## Результат занятия
 
-RAG помогает найти сведения в документах TaskShelf, но найденный Markdown сам по себе не сообщает текущее состояние конкретной задачи. Добавим TaskCatalog и два read-only инструмента: getProjectInfo и getTask.
+RAG помогает найти сведения в документах TaskShelf, но найденный Markdown сам по себе не сообщает текущее состояние конкретной задачи. Вы добавите TaskCatalog и два read-only инструмента: getProjectInfo и getTask.
 
 Сначала приложение само прочитает данные по фиксированному workflow. Затем разрешим tool-capable модели запросить те же инструменты через настоящий ToolCallingAdvisor. Сравним состав данных, обязательность getTask, число model/tool calls и ошибки.
 
@@ -425,7 +425,7 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Для полного унаследованного pgvector-профиля нужен Docker. Новые tool unit/HTTP contracts работают с контролируемыми model fixtures без скачивания весов. Фактические количества/результаты и границы приведены в [VERIFICATION](../VERIFICATION.md).
+Для полного унаследованного pgvector-профиля нужен Docker. Новые tool unit/HTTP contracts работают с контролируемыми model fixtures без скачивания весов. Поддержку tools настоящей моделью проверяйте отдельным smoke-сценарием. [Результаты проверки примера](../VERIFICATION.md).
 
 Проверки должны различать:
 

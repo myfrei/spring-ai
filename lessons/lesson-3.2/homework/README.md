@@ -1,5 +1,7 @@
 # ДЗ 3.2. Тематический профиль источников
 
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/java/dev/myfrei/repopilot/advisor/DocumentScopeAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md)
+
 В [лекции](../lecture/README.md) вы построили собственные advisors и подключили их к call/stream. Здесь **вся реализация лекции уже готова**, включая diagnostics из 3.1. Повторно писать SnapshotRagAdvisor, ServiceRagAdvisor или RAG-поиск не требуется.
 
 Новая задача продукта: пользователь выбирает тему ответа. Для диагностики он получает сведения из runbook, для архитектуры — из overview/runtime. Даже высоко оценённый SQL-поиском чанк другой темы не должен попасть в prompt и RagReport. Эта функция отсутствует в lecture.
@@ -13,7 +15,7 @@
 - `RagPreparationService`: search → selection → plan; policy вызывается до расчёта бюджета.
 - Семь дополнительных приёмочных тестов. Они проверяют новое поведение, не требуют копировать методы из lecture.
 
-Единственный новый TODO находится в [DocumentScope.java](src/main/java/dev/myfrei/repopilot/advisor/DocumentScope.java). Его UnsupportedOperationException намеренно оставлен студенту. Он вызывается только новым scoped endpoint, поэтому исходная функция урока работает до решения ДЗ.
+Единственный новый TODO находится в [DocumentScope.java](src/main/java/dev/myfrei/repopilot/advisor/DocumentScope.java). Реализуйте этот метод вместо заглушки UnsupportedOperationException. Он вызывается только новым scoped endpoint, поэтому исходная функция урока работает до решения ДЗ.
 
 ## 2. Запуск и исходное состояние тестов
 
@@ -27,7 +29,7 @@ npm test
 ./mvnw -Dtest=DocumentScopeAcceptanceTest test
 ```
 
-Первый шаг должен собрать приложение. Регрессии готовой базы — зелёные. Последняя команда должна показать красные новые критерии: каркас компилируется, но DocumentScope ещё не реализован. В поставляемом каркасе это семь проверок: одна assertion failure и шесть errors из-за явного TODO. Не меняйте тесты, чтобы скрыть TODO.
+Первый шаг должен собрать приложение, а регрессионные тесты готовой базы — пройти. Последняя команда запускает семь новых приёмочных проверок: до реализации DocumentScope они ожидаемо не проходят. Реализуйте метод и повторите проверку, сохранив тесты без изменений.
 
 После реализации:
 

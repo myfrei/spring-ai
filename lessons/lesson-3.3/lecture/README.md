@@ -1,12 +1,12 @@
 # Урок 3.3. Подготовка запросов: контекст, MultiQuery и RRF
 
-[Материалы урока](../README.md) · [Предыдущая лекция 3.2](../../lesson-3.2/lecture/README.md) · [Домашнее задание](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 3.2](../../lesson-3.2/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-26. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17 / pgvector 0.8.1. Сквозной продукт — RepoPilot, корпус — вымышленный Java-сервис TaskShelf.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Ollama, PostgreSQL 17 / pgvector 0.8.1. Сквозной продукт — RepoPilot, корпус — вымышленный Java-сервис TaskShelf.
 
 ## Результат занятия
 
-RepoPilot уже умеет объяснить, какие документы попали в RAG и как advisor сформировал prompt. Теперь добавим подготовку **поискового** запроса: восстановим смысл короткого продолжения диалога, получим ограниченное число формулировок и объединим найденные chunks по рангам.
+RepoPilot уже умеет объяснить, какие документы попали в RAG и как advisor сформировал prompt. Теперь вы добавите подготовку **поискового** запроса: восстановите смысл короткого продолжения диалога, получите ограниченное число формулировок и объедините найденные chunks по рангам.
 
 В конце работают четыре новых JSON API: `/api/queries/plan`, `/prepare`, `/call`, `/compare`. Обычный чат и UI диагностики из 3.1 сохраняются; отдельной панели для query experiment нет. Историю в новом API передаём явно в запросе, а не загружаем по conversationId. Результаты этого лабораторного вызова не добавляются в SQLite-переписку и не сохраняются автоматически как evaluation run.
 
@@ -304,7 +304,7 @@ public record Plan(Mode requestedMode, Mode effectiveMode, String original,
 
 `promptVersion` берётся из `repopilot.query.prompt-version`; допустимы `[a-z0-9-]{1,40}`. `systemPromptHash` — SHA-256 настроенного системного prompt. Они помогают сопоставлять эксперименты и понадобятся в ключе кеша ДЗ.
 
-Версия — явный контракт автора. Код не вычисляет автоматически hash всех templates и исходников. Если меняете QUERY_CONTEXTUALIZE/QUERY_EXPAND, правила бюджета или финальную инструкцию, зафиксируйте изменение версии и Git revision в worksheet. Один `systemPromptHash` не описывает весь pipeline.
+Версию задавайте явно как часть контракта приложения. Код не вычисляет автоматически hash всех templates и исходников. Если меняете QUERY_CONTEXTUALIZE/QUERY_EXPAND, правила бюджета или финальную инструкцию, зафиксируйте изменение версии и Git revision в worksheet. Один `systemPromptHash` не описывает весь pipeline.
 
 ## 7. Собираем policy: original всегда первый
 
@@ -397,7 +397,7 @@ curl -sS http://127.0.0.1:8080/api/queries/plan \
   -d '{"question":"А порт?","mode":"CONTEXTUAL","history":[{"question":"Как запустить TaskShelf локально?","answer":"Рассматриваем локальный запуск TaskShelf через Docker Compose."}]}'
 ```
 
-Проверьте фактическую строку rewrite. Мы не приводим «эталонный ответ модели» как измеренный результат: конкретный текст зависит от весов. Original должен остаться первым при любом допустимом rewrite. Затем поменяйте CONTEXTUAL на EXPANDED и проверьте preparationCalls<=2, queries<=3, отсутствие повторных точных строк.
+Проверьте фактическую строку rewrite: конкретный текст зависит от весов, поэтому оценивайте полученную формулировку по смыслу и контракту, а не по совпадению с примером. Original должен остаться первым при любом допустимом rewrite. Затем поменяйте CONTEXTUAL на EXPANDED и проверьте preparationCalls<=2, queries<=3, отсутствие повторных точных строк.
 
 Не отправляйте `/plan` как якобы бесплатный preview: кроме DIRECT он может реально запускать модель. Повтор `/plan`, затем `/prepare`, затем `/call` — три независимых подготовки, а не использование одного сохранённого плана.
 
@@ -612,7 +612,7 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Для последнего шага нужен работающий Docker; Testcontainers создаёт отдельную тестовую БД. В обычных быстрых тестах веса заменяются mocks/HTTP-fixtures. Они подтверждают механизмы, а не качество конкретных весов. Полный lecture-прогон при подготовке прошёл: **223 быстрых Java + 24 интеграционных pgvector-проверки + 104 JS**, без падений и пропусков. Детали и границы результата — в [VERIFICATION.md](../VERIFICATION.md). Реальные веса в этом прогоне не использовались.
+Для последнего шага нужен работающий Docker; Testcontainers создаёт отдельную тестовую БД. В обычных быстрых тестах веса заменяются mocks/HTTP-fixtures. Они подтверждают механизмы, а не качество конкретных весов. Для проверки качества отдельно запустите настоящую модель. [Результаты проверки примера](../VERIFICATION.md).
 
 Начните с **23 новых детерминированных query-проверок** (13 planner + 5 RRF + 4 budget + 1 flags):
 
@@ -656,7 +656,7 @@ npm test
 
 Реализуется только `QueryPlanCache.getOrCompute`; готовый маршрут — `POST /api/queries/cached/plan`, новый [acceptance-набор](../homework/src/test/java/dev/myfrei/repopilot/cache/QueryPlanCacheAcceptanceTest.java) содержит девять сценариев. Поле `incrementalPreparationCalls` показывает стоимость текущего обращения, тогда как Plan хранит историческую стоимость своего создания. После зелёных acceptance выполните regression-набор и сравните два одинаковых запроса с измерением реальных preparation calls. В [SUBMISSION](../homework/SUBMISSION.md) разделите hit/miss/expiry/eviction и время последующего retrieval/generation: cache hit подготовки не устраняет embedding searches и финальный ответ. При смене digest/version не переносите старый plan в новые условия.
 
-Фактические результаты каркаса и временного эталона приводятся в [VERIFICATION](../VERIFICATION.md). Новый независимый acceptance не заменяет регрессии работающей лекционной базы.
+После реализации проверьте новые приёмочные критерии и регрессии готовой лекционной базы: нужны оба набора. [Результаты проверки примера](../VERIFICATION.md).
 
 ## 18. Самопроверка
 
@@ -673,7 +673,7 @@ npm test
 
 ## 19. Источники
 
-- [Spring AI 2.0: Modular RAG и Pre-Retrieval](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html) — CompressionQueryTransformer, MultiQueryExpander, retrieval и post-processing. При подготовке страницы её версия — 2.0.2; dependency этого проекта закреплена в pom.xml.
+- [Spring AI 2.0: Modular RAG и Pre-Retrieval](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html) — CompressionQueryTransformer, MultiQueryExpander, retrieval и post-processing. В проекте закреплена зависимость 2.0.2 в pom.xml; сверяйте примеры из документации с этой версией.
 - [Spring AI Advisors API](https://docs.spring.io/spring-ai/reference/api/advisors.html) — границы before/after и order.
 - [Spring AI ChatClient](https://docs.spring.io/spring-ai/reference/api/chatclient.html) — отдельные builders, call и metadata.
 - [Ollama Chat API](https://docs.ollama.com/api/chat), [List Models](https://docs.ollama.com/api/tags) — runtime и digest.

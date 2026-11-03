@@ -1,8 +1,8 @@
 # Урок 5.2. Read-only workspace: навигация, Git и read receipts
 
-[Материалы урока](../README.md) · [Предыдущая лекция 5.1](../../lesson-5.1/lecture/README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/workspace/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 5.1](../../lesson-5.1/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Java 25, Boot 4.1.2, Spring AI2.0.2. Новый workspace подключается к manual agent runtime5.1. Старые chat/RAG/MCP API сохранены; нового UI нет.
+В уроке используются Java 25, Spring Boot 4.1.2 и Spring AI 2.0.2. Подключим workspace к manual agent runtime из 5.1 и проверим чтение репозитория через API. Chat, RAG и MCP остаются отдельными сценариями приложения.
 
 ## Результат занятия
 
@@ -330,7 +330,7 @@ return new WorkspaceProcessRunner().run(command, this.root);
 
 [WorkspaceProcessRunner](src/main/java/dev/myfrei/repopilot/workspace/WorkspaceProcessRunner.java) создаёт ProcessBuilder с этим списком и root working directory, ограничивает вывод/ожидание и выполняет cleanup.
 
-.git должна быть собственной real directory: worktree `.git` file, symlinks, commondir/objects alternates и опасная local include/filter configuration отвергаются. Наличие `.git/config.worktree` также запрещено независимо от extensions flag: дополнительные worktree overlays этим учебным сервисом не поддерживаются. Inherited GIT_* удаляются; global/system config выключены. Fixed flags отдельно выключают fsmonitor, hooks, external diff/textconv и pager. Самого отсутствия shell для этих гарантий было бы мало. Git способен читать дополнительный config.worktree и запускать configured clean filter; поэтому отказ проверяется harmless-helper regression до реального Git-вызова. Порядок источников описан в [Git configuration](https://git-scm.com/docs/git-config).
+.git должна быть собственной real directory: worktree `.git` file, symlinks, commondir/objects alternates и опасная local include/filter configuration отвергаются. Наличие `.git/config.worktree` также запрещено независимо от extensions flag: дополнительные worktree overlays этим учебным сервисом не поддерживаются. Inherited GIT_* удаляются; global/system config выключены. Fixed flags отдельно выключают fsmonitor, hooks, external diff/textconv и pager. Самого отсутствия shell для этих гарантий было бы мало. Git способен читать дополнительный config.worktree и запускать configured clean filter. Regression-тест с безвредной программой-помощником позволяет проверить, что такая конфигурация отклоняется до реального Git-вызова. Порядок источников описан в [Git configuration](https://git-scm.com/docs/git-config).
 
 | Git operation | Смысл |
 | --- | --- |
@@ -403,13 +403,13 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Дополнительные MCP IT запускаются отдельно по 4.4. Точные counts и limits proof — в [VERIFICATION](../VERIFICATION.md). Fixture build подтверждает бизнес-tests Stock Room; runtime tests подтверждают tools/orchestration. Они не измеряют качество установленной модели и не означают, что агент сам запускал build.
+Дополнительные MCP IT запускайте отдельно по [инструкции 4.4](../../lesson-4.4/lecture/README.md). Различайте результаты: fixture build проверяет бизнес-тесты Stock Room, а runtime tests — tools и orchestration. Эти сценарии не измеряют качество установленной модели и не означают, что агент сам запускал build. Автоматические сценарии описаны в [результатах проверки примера](../VERIFICATION.md).
 
 Заполните [пустой бланк](evaluation/Workspace-Read-Experiment.md). Сравните пути/строки в ответе с реальными readFile results. Проверяйте scope каждого утверждения: TaskShelf getProjectInfo/getTask описывают TaskShelf, а не произвольный Stock Room. Для его кода нужны workspace files/receipts.
 
 ## 13. Самостоятельное ДЗ: проверяем evidence claims
 
-В [homework](../homework/README.md) WorkspaceService, все tools, ledger и endpoint adapter готовы. Новый [EvidencePolicy](../homework/src/main/java/dev/myfrei/repopilot/evidence/EvidencePolicy.java) с единственным TODO check получает чистые данные и решает, подтверждён ли claim чтением этого run. Студент не копирует path validation, Git ProcessBuilder или runtime.
+В [домашнем задании](../homework/README.md) используйте готовые WorkspaceService, tools, ledger и endpoint adapter. Реализуйте check в [EvidencePolicy](../homework/src/main/java/dev/myfrei/repopilot/evidence/EvidencePolicy.java): по предоставленным данным определите, подтверждён ли claim чтением этого run. Правила путей, Git ProcessBuilder и runtime уже обеспечивают получение входных фактов.
 
 Input содержит runId,1..12 Claims, до 256 ReadSpan и server-built map текущих hashes. Claim задаёт path/fullFileHash/startLine/endLine; ReadSpan добавляет собственный runId. Проверка идёт в таком приоритете:
 
@@ -440,7 +440,7 @@ Content-Type: application/json
 
 Для NOT_READ-сценария можно в одном run сначала прочитать README, затем проверить claim другого файла: ledger доступен, но нужного receipt нет. Search-only run receipts не создаёт; его endpoint может получить RECEIPTS_UNAVAILABLE, а не набор отдельных NOT_READ.
 
-Приёмочные тесты чистой policy проверяют same-run/path/hash, свежесть, приоритеты statuses, inclusive coverage, overlap/adjacency/holes и сохранение порядка. Adapter tests отдельно проверяют server-owned данные, ошибки ledger и совместимые path limits. Команды — в [homework README](../homework/README.md), эталон и стартовые красные TODO — в [VERIFICATION](../VERIFICATION.md).
+Приёмочные тесты policy проверяют same-run/path/hash, свежесть, приоритеты statuses, inclusive coverage, overlap/adjacency/holes и сохранение порядка. Adapter tests отдельно проверяют server-owned данные, ошибки ledger и совместимые path limits. Запустите оба набора по командам из [условий ДЗ](../homework/README.md); приёмочные тесты выявляют TODO, пока check не реализован.
 
 Заполните [SUBMISSION](../homework/SUBMISSION.md): покажите один SUPPORTED, один STALE и один OUTSIDE_READ_RANGES. Объясните, почему SUPPORTED не доказывает верность объяснения модели или успешный запуск tests.
 

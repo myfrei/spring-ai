@@ -1,8 +1,8 @@
 # ДЗ 4.1. Страницы списка задач
 
-[Лекция](../lecture/README.md) · [Материалы урока](../README.md) · [Результаты проверки](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/java/dev/myfrei/repopilot/taskpage/TaskPagePolicyAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md) · [Проверки примера](../VERIFICATION.md)
 
-Вся база лекции готова: каталог TaskShelf, workflow, настоящий Spring AI tool loop, его лимиты, audit и проверки. Новая функция — **постраничный read-only listTasks** с курсором, привязанным к данным и фильтру. В лекции getProjectInfo/getTask не реализуют этот контракт. Повторить их код для зачёта недостаточно.
+Вся база лекции готова: каталог TaskShelf, workflow, настоящий Spring AI tool loop, его лимиты, audit и проверки. Добавьте **постраничный read-only listTasks** с курсором, привязанным к данным и фильтру. В лекции getProjectInfo/getTask не реализуют этот контракт. Повторить их код для зачёта недостаточно.
 
 Заполните только [TaskPagePolicy.page](src/main/java/dev/myfrei/repopilot/taskpage/TaskPagePolicy.java). Callback, строгий JSON adapter, API, cursor codec, DTO и тесты предоставлены.
 
@@ -57,7 +57,7 @@ npm test
 npm test
 ```
 
-Последний Maven-профиль проверяет унаследованный RAG и требует Docker; сама pagination не использует ни Docker, ни Ollama. Фактические счётчики — в VERIFICATION.
+Последний Maven-профиль проверяет унаследованный RAG и требует Docker; сама pagination не использует ни Docker, ни Ollama.
 
 Для ручной проверки запускайте обычный проект по лекции. Если нужен только Java tools путь без PostgreSQL:
 
@@ -83,4 +83,4 @@ curl -sS http://127.0.0.1:8080/api/tools/tasks/page \
 
 Восемь acceptance проверяют порядок, полный обход, фильтр/total, привязку cursor, перестановку входа, пустой/последний ответ, границы/duplicate IDs и immutable snapshot. Тесты предоставленного adapter дополнительно проверяют схему и строгий JSON.
 
-Заполните [SUBMISSION.md](SUBMISSION.md): команды, результаты, cursor-сценарии и объяснение отличий от модели лекции. Не меняйте тесты и не подставляйте готовый массив только для TASK-101..105. Временный эталон использовался для проверки исполнимости задания и не входит в homework.
+Заполните [SUBMISSION.md](SUBMISSION.md): команды, результаты, cursor-сценарии и объяснение отличий от модели лекции. Не меняйте тесты и не подставляйте готовый массив только для TASK-101..105.

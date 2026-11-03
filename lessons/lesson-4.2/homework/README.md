@@ -1,8 +1,8 @@
 # ДЗ4.2. Целые критерии приёмки через MCP
 
-[Лекция](../lecture/README.md) · [Материалы урока](../README.md) · [Проверки](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](task-server/src/test/java/dev/myfrei/repopilot/checklist/AcceptanceChecklistAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md) · [Проверки примера](../VERIFICATION.md)
 
-Вся база лекции готова: приложение RepoPilot и отдельный task-server на Java MCP SDK, tools/listTasks/getTask, resource, prompt и STDIO lifecycle. Новая функция — `getAcceptanceChecklist`: выдавать **целые** критерии приёмки с ограничением количества и Unicode-объёма. Это не повторная регистрация сервера или написание getTask.
+Вся база лекции готова: приложение RepoPilot и отдельный task-server на Java MCP SDK, tools/listTasks/getTask, resource, prompt и STDIO lifecycle. Добавьте `getAcceptanceChecklist`: выдавайте **целые** критерии приёмки с ограничением количества и Unicode-объёма. Используйте готовый сервер и getTask; реализовать предстоит новую политику формирования checklist.
 
 Единственный TODO: [AcceptanceChecklistPolicy.build](task-server/src/main/java/dev/myfrei/repopilot/checklist/AcceptanceChecklistPolicy.java). Весь MCP adapter, schema, валидация, entrypoint и codec предоставлены.
 
@@ -85,11 +85,11 @@ npm ci
 npm test
 ```
 
-Первый verify собирает shaded JAR и проверяет настоящий отдельный STDIO-процесс SDK-клиентом. Второй относится к унаследованному RAG приложения и требует Docker. Новая policy не использует Docker/Ollama/PostgreSQL. Точные результаты каркаса/эталона — в VERIFICATION.
+Первый verify собирает shaded JAR и проверяет настоящий отдельный STDIO-процесс SDK-клиентом. Второй относится к унаследованному RAG приложения и требует Docker. Новая policy не использует Docker/Ollama/PostgreSQL. [Результаты проверки примера](../VERIFICATION.md).
 
 ## Inspector 0.21.2 и отдельный entrypoint ДЗ
 
-Из `homework` используйте **закреплённую версию 0.21.2**. Эти CLI-команды проверены на отдельном процессе с Java 25; `JAVA_HOME` должен указывать на ваш JDK 25. Inspector сам запускает и завершает дочерний сервер, поэтому отдельно открытый `java -cp` процесс для этих команд не нужен.
+Из `homework` используйте **закреплённую версию 0.21.2**. Запускайте CLI-команды с Java 25; `JAVA_HOME` должен указывать на ваш JDK 25. Inspector сам запускает и завершает дочерний сервер, поэтому отдельно открытый `java -cp` процесс для этих команд не нужен.
 
 ```bash
 npm exec --yes --package=@modelcontextprotocol/inspector@0.21.2 -- \
@@ -137,4 +137,4 @@ Inspector 0.21.2 преобразует числовые строки по integ
 
 Восемь policy-тестов проверяют целые строки/счётчики, Unicode whitespace/NFKC/dedup/IDs, maxItems, oversized-first, запрет skip, code points и точную границу, пустой результат/case, immutable snapshot и input bounds. Три adapter-теста проверяют schema, invalid args до policy и передачу внутренних criteria.
 
-Заполните [SUBMISSION.md](SUBMISSION.md), приложите protocol результаты и объясните разницу между limits. Не меняйте тесты, не копируйте временный эталон и не выдавайте partial checklist за полный.
+Заполните [SUBMISSION.md](SUBMISSION.md), приложите protocol результаты и объясните разницу между limits. Сохраните тесты без изменений и явно отличайте partial checklist от полного.

@@ -1,6 +1,8 @@
 # ДЗ 3.4. Offline evaluator качества ранжирования
 
-В лекции построены режимы reranking NONE, LEXICAL и LLM. В этом задании они предоставлены **полностью готовыми**. Вы добавляете отдельный инструмент: детерминированно оцениваете сохранённый порядок document IDs по ручным graded judgments. Студент не пишет ещё один reranker и не повторяет код лекции.
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/java/dev/myfrei/repopilot/rankingeval/RankingMetricsAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md)
+
+В лекции построены режимы reranking NONE, LEXICAL и LLM. В этом задании они предоставлены **полностью готовыми**. Вы добавляете отдельный инструмент: детерминированно оцениваете сохранённый порядок document IDs по ручным graded judgments. Используйте готовый reranker и сосредоточьтесь на оценке сохранённых результатов.
 
 Новый endpoint `POST /api/ranking/evaluate` уже подключён. Он принимает только ограниченные metadata, не обращается к модели, не запускает retrieval/SQL и не сохраняет вопросы, ответы или документы. Ваша задача — реализовать один pure policy метод [RankingMetrics.evaluate](src/main/java/dev/myfrei/repopilot/rankingeval/RankingMetrics.java). API, DTO, валидация, error advice и восемь acceptance-тестов готовы.
 

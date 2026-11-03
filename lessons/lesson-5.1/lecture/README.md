@@ -1,8 +1,8 @@
 # Урок 5.1. AI Harness: собственный агентский цикл
 
-[Материалы урока](../README.md) · [Предыдущая лекция 4.4](../../lesson-4.4/lecture/README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/agent/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 4.4](../../lesson-4.4/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Java 25, Spring Boot 4.1.2, Spring AI2.0.2, локальный Ollama. Новый runtime работает независимо от RAG/PostgreSQL/MCP. Все прежние сценарии сохранены, но в этой лаборатории они не управляют agent loop.
+В уроке используются Java 25, Spring Boot 4.1.2, Spring AI 2.0.2 и локальный Ollama. Агентским циклом управляет отдельный runtime; RAG, PostgreSQL и MCP работают в своих сценариях приложения.
 
 ## Результат занятия
 
@@ -400,13 +400,13 @@ npm test
 ./mvnw verify -Ppgvector-it
 ```
 
-Если запускаете дополнительные MCP IT из 4.4, сохраняйте отдельные IT-профили и заранее собранный server JAR по командам [предыдущей лекции](../../lesson-4.4/lecture/README.md). Они не становятся необходимыми для первого agent smoke. Итоговые числа и границы доказательства — в [VERIFICATION](../VERIFICATION.md).
+Дополнительные интеграционные проверки MCP выполняйте отдельными IT-профилями с заранее собранным server JAR по командам [урока 4.4](../../lesson-4.4/lecture/README.md). Первый запуск агентского цикла можно проверить отдельно от MCP. [Результаты проверки примера](../VERIFICATION.md) помогут сопоставить автоматические сценарии со своим запуском.
 
 Для реальных весов заполните [пустой бланк](evaluation/Agent-Run-Experiment.md). Сопоставьте фактические tools, завершение, затраты и содержательность ответа. Fixture подтверждает orchestration, но не способность установленных весов к tool calling и не качество ответа.
 
 ## 13. Самостоятельное ДЗ: остановка при отсутствии прогресса
 
-В [homework](../homework/README.md) manual loop, registry, tools, events и API уже готовы. Новый [CycleStopRule](../homework/src/main/java/dev/myfrei/repopilot/progress/CycleStopRule.java) реализует небольшую policy остановки. Единственный TODO — private repeatedSuffix; afterTool с проверкой входа и immutable copy предоставлен. Он подключён через RunStopRule; студент не копирует runtime из лекции и не реализует заново tool calling.
+В [домашнем задании](../homework/README.md) используйте готовые manual loop, registry, tools, events и API. Добавьте правило остановки в [CycleStopRule](../homework/src/main/java/dev/myfrei/repopilot/progress/CycleStopRule.java): реализуйте private repeatedSuffix. Метод afterTool уже проверяет вход и передаёт immutable copy, а RunStopRule подключает правило к runtime. Сосредоточьтесь на распознавании повторов в наблюдениях инструментов.
 
 Runtime передаёт список ToolObservation после результата инструмента. Observation содержит name/argumentsHash/resultHash/ok. Нужно найти **суффикс** из двух одинаковых подряд блоков длины 1,2 или 3. Если найден хотя бы один допустимый период, вернуть stop и завершить run NO_PROGRESS до следующего inference.
 
@@ -435,7 +435,7 @@ Content-Type: application/json
 
 Исходный `/runs` сохраняет базовую policy лекции. Новый маршрут использует ту же conversation/store и тот же runtime с дополнительным stop rule. По `/api/agent/runs/{runId}/messages` можно проверить, что остановка произошла после сохранённого результата tool и до следующего model call.
 
-Точные команды новых acceptance — в [homework README](../homework/README.md). База должна проходить сразу; проверки TODO до реализации ожидаемо красные. Проверенный временный эталон и ограничения описаны в [VERIFICATION](../VERIFICATION.md), решение не лежит в homework. Заполните [SUBMISSION](../homework/SUBMISSION.md) и объясните один пример периода 2 и один похожий случай, который останавливаться не должен.
+Запустите приёмочные тесты по командам из [условий ДЗ](../homework/README.md): до реализации repeatedSuffix они выявляют TODO. После реализации проверьте весь набор. Заполните [SUBMISSION](../homework/SUBMISSION.md) и объясните один пример периода 2 и один похожий случай, который останавливаться не должен.
 
 ## 14. Переходим к workspace
 

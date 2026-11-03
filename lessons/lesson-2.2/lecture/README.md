@@ -1,8 +1,8 @@
 # Урок 2.2. Документы → чанки → embeddings
 
-[Материалы урока](../README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-2.1/lecture/README.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/ingestion/) · [Все уроки](../../../README.md#программа) · [Проверки примера](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-2.1/lecture/README.md)
 
-Дата сверки: 2026-10-25. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. Для UI-проверок — Node.js 24 и jsdom 27.4.0.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. Для UI-проверок — Node.js 24 и jsdom 27.4.0.
 
 ## Результат занятия
 
@@ -639,7 +639,7 @@ public class IndexArtifactStore {
 }
 ```
 
-Используется ATOMIC_MOVE в том же каталоге. Если файловая система не поддерживает такую операцию, сохранение завершается ошибкой; скрытого fallback с частично видимым файлом нет. Проверено на macOS aarch64. Это атомарная видимость замены, а не гарантия fsync/power-loss durability или защита от ручного редактирования артефакта. [Files.move, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html).
+Используется ATOMIC_MOVE в том же каталоге. Если файловая система не поддерживает такую операцию, сохранение завершается ошибкой; скрытого fallback с частично видимым файлом нет. Это атомарная видимость замены, а не гарантия fsync/power-loss durability или защита от ручного редактирования артефакта. [Files.move, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html).
 
 При чтении проверяем формат manifest, число/уникальность ID, corpusVersion, размерности и допустимость значений. Это проверка структуры, не криптографическая подпись содержимого. Не принимайте произвольный загруженный JSON как доверенный индекс.
 
@@ -1038,7 +1038,7 @@ npm ci
 npm test
 ```
 
-Рабочий проект: **132 Java- и 79 JavaScript-проверок**. Сохранены 102 Java- и 70 JS-сценариев 2.1. Новые наборы:
+Вместе с чатами, историей и сборкой контекста проверьте новые сценарии подготовки документов и индекса:
 
 | Набор | Количество | Что подтверждает |
 | --- | --- | --- |
@@ -1055,9 +1055,9 @@ npm test
 node --test src/test/js/ingestion.test.mjs
 ```
 
-HTTP-тест проверяет batch input, model, truncate=false, dimensions и num_ctx на настоящем исходящем запросе. Проверено сохранение исходного файла после wrong-dimension/wrong-model response и смена fingerprint при новом digest.
+HTTP-тест проверяет batch input, model, truncate=false, dimensions и num_ctx на настоящем исходящем запросе. Он также проверяет сохранение исходного файла после wrong-dimension/wrong-model response и смену fingerprint при новом digest.
 
-В браузере проверены preview двух стратегий, чтение чанка, индексирование, повтор без пересчёта и восстановление после restart. Использована HTTP-заглушка с тремя измерениями; настоящая модель не запускалась. Полный отчёт — [VERIFICATION.md](../VERIFICATION.md).
+В браузере проверьте preview двух стратегий, чтение чанка, индексирование, повтор без пересчёта и восстановление после restart. Контрактный HTTP-стенд использует заглушку с тремя измерениями и не оценивает настоящую embedding-модель; для этого выполните собственную индексацию в Ollama. Границы проверок — в [VERIFICATION.md](../VERIFICATION.md).
 
 ## 23. Типичные проблемы
 
@@ -1080,7 +1080,7 @@ HTTP-тест проверяет batch input, model, truncate=false, dimensions 
 
 Реализуйте только [IncrementalEmbeddingPlanner.plan](../homework/src/main/java/dev/myfrei/repopilot/homework/IncrementalEmbeddingPlanner.java). Разделите текущие chunks на reusable и missing. Проверяйте полный EmbeddingIdentity и валидность старого вектора; ключ reuse должен учитывать title, section и text, реально передаваемые encoder. Не возвращайте устаревшие metadata и удалённые chunks. Совпадение размеров векторов или одного raw text не доказывает совместимость.
 
-Готовый `/api/ingestion/incremental/index` выполняет batches только для missing и атомарно публикует новый полный artifact. [Шесть новых acceptance-проверок](../homework/src/test/java/dev/myfrei/repopilot/homework/IncrementalReuseHomeworkAcceptanceTest.java) проверяют точность reuse, смену identity, свежие metadata, удаление stale и orchestration. По [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **132 Java + 79 JS** зелёные, **6 новых Java** сначала красные. Во временном эталоне с заменой только planner проходят **138 Java + 79 JS**, тесты не менялись.
+Готовый `/api/ingestion/incremental/index` выполняет batches только для missing и атомарно публикует новый полный artifact. [Приёмочные проверки](../homework/src/test/java/dev/myfrei/repopilot/homework/IncrementalReuseHomeworkAcceptanceTest.java) проверяют точность reuse, смену identity, свежие metadata, удаление stale и orchestration. Реализуйте planner, затем выполните эти проверки и базовый набор Java/JavaScript. Описание проверок — в [VERIFICATION](../VERIFICATION.md).
 
 После `./mvnw test` и `npm test` из homework проиндексируйте отдельный учебный corpus, измените один документ и удалите другой. В [SUBMISSION](../homework/SUBMISSION.md) укажите reused/embedded counts, текущий fingerprint и способ подсчёта inference calls. Автоматические проверки работают с fixtures; реальные измерения embeddinggemma проводятся отдельно. Экономия вызовов не означает улучшение семантического качества.
 
@@ -1109,4 +1109,3 @@ HTTP-тест проверяет batch input, model, truncate=false, dimensions 
 - [Java 25 Files API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html).
 
 Следующий урок 2.3: PostgreSQL/pgvector, первый retrieval и ответы с найденными источниками.
-

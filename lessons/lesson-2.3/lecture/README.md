@@ -1,5 +1,7 @@
 # Урок 2.3. Документы, чанки и embeddings: постоянный индекс и первый RAG
 
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/rag/) · [Все уроки](../../../README.md#программа)
+
 В 2.2 мы уже построили цепочку «документы → чанки → embeddings» и сохранили JSON-снимок. Продолжаем её: переносим подготовленные векторы в PostgreSQL/pgvector, находим подходящие фрагменты и передаём их локальной LLM. Финальный результат — RepoPilot с режимом RAG, отчётом о контексте и ссылками на точные чанки.
 
 Это продолжение [2.2](../../lesson-2.2/README.md), а не повтор chunker. Сквозной учебный корпус — вымышленный Java-сервис TaskShelf. Материалы и код предыдущих уроков входят в проект; не требуется копировать собственное решение ДЗ, чтобы начать.
@@ -8,7 +10,7 @@
 - [Проверка примера и ограничения](../VERIFICATION.md).
 - [Бланк retrieval-эксперимента](evaluation/Retrieval-Experiment.md).
 
-Дата технической проверки: **2026-10-25**. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven Wrapper 3.3.4 / Maven 3.9.11. UI-тесты: Node 24 и jsdom 27.4.0. SQLite JDBC 3.53.4.0 остаётся хранилищем диалогов. Для векторов добавляется `pgvector/pgvector:0.8.1-pg17`; PostgreSQL JDBC и Testcontainers 2.0.5 управляются выбранной Maven-связкой.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven Wrapper 3.3.4 / Maven 3.9.11. UI-тесты: Node 24 и jsdom 27.4.0. SQLite JDBC 3.53.4.0 остаётся хранилищем диалогов. Для векторов добавляется `pgvector/pgvector:0.8.1-pg17`; PostgreSQL JDBC и Testcontainers 2.0.5 управляются выбранной Maven-связкой.
 
 ## 1. Результат занятия
 
@@ -962,7 +964,7 @@ public class RagController {
 }
 ```
 
-`RagConfiguration` явно собирает Database/Publisher/Searcher/Planner и включается через `repopilot.rag.enabled=true`. Чат и контроллер имеют то же условие. В обычном test profile RAG выключен: старые 132 проверки не требуют PostgreSQL. `PgVectorRagIT` включает его и подставляет свою БД.
+`RagConfiguration` явно собирает Database/Publisher/Searcher/Planner и включается через `repopilot.rag.enabled=true`. Чат и контроллер имеют то же условие. В обычном test profile RAG выключен: базовые проверки не требуют PostgreSQL. `PgVectorRagIT` включает его и подставляет свою БД.
 
 События нового потока:
 
@@ -1048,7 +1050,7 @@ npm test
 
 Последняя команда требует Docker. Testcontainers поднимает отдельный PostgreSQL/pgvector на случайном порту. Compose-база студента не используется и не очищается. Ollama API заменён локальным HTTP-стендом с синтетическими трёхмерными векторами; реальные Spring AI клиенты и SQL остаются в пути запроса.
 
-Проверено **142 unit/HTTP Java**, **11 pgvector integration** и **86 JavaScript** сценариев. Пропусков нет. Контрактный стенд проверяет:
+Контрактный стенд с unit/HTTP-тестами, интеграцией pgvector и UI-тестами проверяет:
 
 - отсутствие второго document inference при публикации;
 - реальное cosine/topK/threshold и все четыре metadata-фильтра;
@@ -1098,7 +1100,7 @@ npm test
 
 Реализуйте только [EvidenceSelector.select](../homework/src/main/java/dev/myfrei/repopilot/homework/EvidenceSelector.java). В исходном ранжированном порядке удаляйте повторные chunkId, ограничивайте число принятых chunks на документ и отбрасывайте чрезмерно перекрывающиеся диапазоны одного документа. Обрабатывайте все невалидные входные данные по контракту. Перенумеруйте выбранные источники S1..Sn без потери metadata и текста; score не пересчитывается, это не reranker.
 
-Готовый DiverseRagService выполняет один настоящий search, затем selection и штатный planner; новые API перечислены в README задания. [Пять новых acceptance-проверок](../homework/src/test/java/dev/myfrei/repopilot/homework/EvidenceSelectionHomeworkAcceptanceTest.java) проверяют дедупликацию, лимиты, overlap, метки и интеграцию. По [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **142 быстрых Java + 86 JS** зелёные, **5 новых Java** сначала красные. Во временном эталоне с заменой только policy проходят **147 быстрых Java + 11 pgvector IT + 86 JS**. IT использовали настоящий PostgreSQL/pgvector в Docker; качество реальных моделей этим не проверялось.
+Готовый DiverseRagService выполняет один настоящий search, затем selection и штатный planner; новые API перечислены в README задания. [Приёмочные проверки](../homework/src/test/java/dev/myfrei/repopilot/homework/EvidenceSelectionHomeworkAcceptanceTest.java) проверяют дедупликацию, лимиты, overlap, метки и интеграцию. Реализуйте policy и выполните базовые и новые проверки. Интеграция использует настоящий PostgreSQL/pgvector в Docker, но не подтверждает качество реальных моделей. Границы проверок — в [VERIFICATION](../VERIFICATION.md).
 
 После быстрых `./mvnw test` и `npm test` из homework выполните `./mvnw verify -Ppgvector-it` с Docker. В [SUBMISSION](../homework/SUBMISSION.md) сравните baseline/diverse на одинаковом запросе и новом диалоге: какие IDs убраны и сохранилось ли нужное свидетельство. Покажите случай, где лимит на документ может ухудшить ответ; diversity не является универсальным улучшением.
 

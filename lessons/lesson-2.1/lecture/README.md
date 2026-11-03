@@ -1,8 +1,8 @@
 # Урок 2.1. Управление контекстом: FULL_CONTEXT и подготовка к RAG
 
-[Материалы урока](../README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.4/lecture/README.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/context/) · [Все уроки](../../../README.md#программа) · [Проверки примера](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.4/lecture/README.md)
 
-Дата сверки: 2026-10-25. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. UI-проверки: Node.js 24, jsdom 27.4.0.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, SQLite JDBC 3.53.4.0. UI-проверки: Node.js 24, jsdom 27.4.0.
 
 ## Результат занятия
 
@@ -1151,7 +1151,7 @@ npm ci
 npm test
 ```
 
-Рабочий проект: **102 Java- и 70 JavaScript-проверок**. Сохранены 79 Java- и 60 JS-сценариев 1.4; в проверке браузерного API изменён ожидаемый маршрут на /context/stream.
+Проверьте чаты и диалоги вместе с новой сборкой контекста. Браузерный API этого урока использует маршрут /context/stream.
 
 | Новый набор | Число | Что проверяется |
 | --- | --- | --- |
@@ -1166,7 +1166,7 @@ npm test
 node --test src/test/js/context.test.mjs
 ```
 
-HTTP-тест проверяет JSON настоящего WebClient-запроса в локальный Ollama stub, включая num_ctx и num_predict. Он также подтверждает, что документы не дублируются в сохранённой истории вопроса. Подготовленный JAR проверен в браузере; реальные веса LLM не запускались. Подробности — [VERIFICATION.md](../VERIFICATION.md).
+HTTP-тест проверяет JSON настоящего WebClient-запроса в локальный Ollama stub, включая num_ctx и num_predict. Он также подтверждает, что документы не дублируются в сохранённой истории вопроса. Такой тест не измеряет качество LLM: отдельно выполните сравнение режимов с настоящей моделью. Границы проверок описаны в [VERIFICATION.md](../VERIFICATION.md).
 
 ## 21. Типичные ошибки
 
@@ -1188,7 +1188,7 @@ HTTP-тест проверяет JSON настоящего WebClient-запро�
 
 Реализуйте только [PinnedContextAssembler.assemble](../homework/src/main/java/dev/myfrei/repopilot/homework/PinnedContextAssembler.java). Сначала получите обязательный план без истории через готовый assembler. Добавьте все pin-пары либо явно откажите с `PINNED_CONTEXT_TOO_LARGE`; затем включайте самые свежие незакреплённые пары до первой не поместившейся. Итоговый prompt должен сохранять хронологию, роли и целые обмены. Pin — индекс пары текущего snapshot, а не ID SQLite и не способ восстановить уже отсутствующую старую память.
 
-Готовые новые `/context/pinned/preview` и `/context/pinned/stream` подключают policy к продукту. [Пять новых acceptance-проверок](../homework/src/test/java/dev/myfrei/repopilot/homework/PinnedContextHomeworkAcceptanceTest.java) проверяют приоритет, валидацию, бюджет, порядок и ContextReport. По [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **102 Java + 70 JS** зелёные, **5 новых Java** сначала красные. Во временном эталоне с заменой только policy проходят **107 Java + 70 JS**, тесты не менялись.
+Готовые новые `/context/pinned/preview` и `/context/pinned/stream` подключают policy к продукту. [Приёмочные проверки](../homework/src/test/java/dev/myfrei/repopilot/homework/PinnedContextHomeworkAcceptanceTest.java) проверяют приоритет, валидацию, бюджет, порядок и ContextReport. Реализуйте PinnedContextAssembler и проверьте новое поведение вместе с базовым контекстом, историей и UI. Описание проверок — в [VERIFICATION](../VERIFICATION.md).
 
 Выполните полный `./mvnw test` и `npm test` из homework. Сравните один snapshot с `pinnedPairs=[]` и `[0]`, включая переполнение обязательной закреплённой части. Заполните [SUBMISSION](../homework/SUBMISSION.md): какие пары остались и почему. Полный контракт и команды API приведены в README задания; реальную генерацию отмечайте отдельно от acceptance.
 
@@ -1215,4 +1215,3 @@ HTTP-тест проверяет JSON настоящего WebClient-запро�
 - [Spring AI RAG](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html) — retrieval перед генерацией.
 
 Следующий урок 2.2: превращаем разрешённые Markdown-документы в чанки и embeddings, сохраняя привязку к версии корпуса.
-

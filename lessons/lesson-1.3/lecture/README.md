@@ -1,8 +1,8 @@
 # Урок 1.3. Streaming: от Spring AI до постепенно появляющегося ответа
 
-[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Проверка](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.2/lecture/README.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/chat/) · [Все уроки](../../../README.md#программа) · [Проверки примера](../VERIFICATION.md) · [Предыдущая лекция](../../lesson-1.2/lecture/README.md)
 
-Дата: 2026-10-25. **Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11**. Для UI-тестов: Node.js 24 и jsdom 27.4.0.
+**Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11**. Для UI-тестов: Node.js 24 и jsdom 27.4.0.
 
 ## Результат занятия
 
@@ -412,7 +412,7 @@ repopilot:
 - 100 секунд → MVC async timeout как внешний запас.
 - 120 секунд → настройки HTTP-клиентов; более короткий application timeout срабатывает раньше.
 
-Для streaming зафиксирован Reactor connector WebClient, для старого синхронного запроса — JDK HTTP factory. На выбранном Reactor connector проверено закрытие upstream после отмены клиента. Перенос на другой connector требует тех же контрактных проверок.
+Для streaming зафиксирован Reactor connector WebClient, для старого синхронного запроса — JDK HTTP factory. Контрактные HTTP-тесты проверяют закрытие upstream после отмены клиента на выбранном Reactor connector. Перенос на другой connector требует тех же контрактных проверок.
 
 Включённые virtual threads уменьшают стоимость ожидающих операций MVC в этой конфигурации Java 25. Они не ускоряют inference и не отменяют необходимость лимитов. В Spring AI 2.0.2 сохранено `retry.max-attempts: 0`: автоматический повтор посреди ответа мог бы смешать два результата.
 
@@ -864,9 +864,9 @@ npm ci
 npm test
 ```
 
-### Java: 53 проверки
+### Java
 
-29 проверок из предыдущего урока сохранены. Добавлены:
+Вместе с обычным чатом проверьте новый потоковый контракт:
 
 | Набор | Количество | Что проверяет |
 | --- | --- | --- |
@@ -878,7 +878,7 @@ StepVerifier проверяет последовательность и cancella
 
 Интеграционный тест удерживает завершение provider через latch и убеждается, что клиент уже получил delta. Это сильнее, чем проверить итоговую строку после закрытия ответа.
 
-### JavaScript: 45 проверок
+### JavaScript
 
 | Набор | Количество | Что проверяет |
 | --- | --- | --- |
@@ -909,7 +909,7 @@ StepVerifier проверяет последовательность и cancella
 
 Реализуйте только [OutputQuota.apply](../homework/src/main/java/dev/myfrei/repopilot/chat/OutputQuota.java). Считайте Unicode code points отдельно для каждой подписки. При переполнении передайте помещающийся непустой префикс delta, затем ровно один `failed` с кодом `OUTPUT_BUDGET` и отмените upstream. Не разрывайте surrogate pair emoji, не создавайте пустой delta и не подменяйте переполнение событием completed. Точная граница с нормальным финалом provider должна оставаться completed; исходный failed нужно сохранить.
 
-[Семь новых acceptance-проверок](../homework/src/test/java/dev/myfrei/repopilot/chat/OutputQuotaAcceptanceTest.java) покрывают границы, emoji, независимые подписки, отмену источника и использование policy предоставленным controller. Согласно [VERIFICATION](../VERIFICATION.md), каркас собирается, базовые **53 Java + 45 JS** зелёные, **7 новых Java** сначала красные. Во временном эталоне, где заменена только quota policy, проходят **60 Java + 45 JS** без изменения тестов.
+[Приёмочные проверки](../homework/src/test/java/dev/myfrei/repopilot/chat/OutputQuotaAcceptanceTest.java) покрывают границы, emoji, независимые подписки, отмену источника и использование policy предоставленным controller. После реализации quota policy выполните их вместе с базовыми Java- и UI-тестами. Описание проверок и их границ — в [VERIFICATION](../VERIFICATION.md).
 
 Выполните `./mvnw test` и `npm test` из homework, затем проверьте новый endpoint через curl с маленькой квотой. В [SUBMISSION](../homework/SUBMISSION.md) сохраните последовательность событий и объясните, почему остановка выдачи отличается от подтверждённой остановки вычислений модели. HTTP после начала SSE остаётся 200; исход читается из terminal event.
 

@@ -1,12 +1,12 @@
 # Урок 4.2. MCP-сервер на Java SDK: STDIO и Inspector
 
-[Материалы урока](../README.md) · [Предыдущая лекция 4.1](../../lesson-4.1/lecture/README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](task-server/src/test/java/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 4.1](../../lesson-4.1/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Новый `task-server` — отдельный Maven-проект на Java 25 и MCP Java SDK 2.1.0. Унаследованное приложение RepoPilot использует Boot 4.1.2/Spring AI 2.0.2, но отдельный MCP-сервер этого урока не запускает Spring Boot и не использует LLM или pgvector.
+Новый `task-server` — отдельный Maven-проект на Java 25 и MCP Java SDK 2.1.0. Унаследованное приложение RepoPilot использует Boot 4.1.2/Spring AI 2.0.2, но отдельный MCP-сервер этого урока не запускает Spring Boot и не использует LLM или pgvector.
 
 ## Результат занятия
 
-В 4.1 Java callbacks жили внутри RepoPilot. Теперь вынесем доступ к учебному каталогу задач в отдельный процесс и опишем стандартный MCP-интерфейс: два tools, один resource и один prompt. Через Inspector проверим discovery, вызовы, ошибки и завершение процесса.
+В 4.1 Java callbacks жили внутри RepoPilot. В этом уроке вы вынесете доступ к учебному каталогу задач в отдельный процесс и опишете стандартный MCP-интерфейс: два tools, один resource и один prompt. Через Inspector проверьте discovery, вызовы, ошибки и завершение процесса.
 
 Мы ещё не подключаем MCP как источник tools к генеративному host RepoPilot. В этом занятии клиент — SDK contract test или Inspector. Сервер не вызывает модель и не «дообучает» её. Работа MCP без единого inference — нормальный результат.
 
@@ -41,9 +41,9 @@ MCP стандартизирует интерфейс доступа. Он не 
 
 [SDK release2.1.0](https://github.com/modelcontextprotocol/java-sdk/releases/tag/v2.1.0), дата protocol revision и версия Inspector — три разные вещи. Не выбирайте одну цифру вместо другой. SDK не становится реализацией более новой ревизии из-за изменения строки в README.
 
-На дату подготовки существует [protocol revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28). Его описание self-contained requests и per-request capability negotiation нельзя молча смешивать с lifecycle2025-11-25 этого проекта. Здесь используем pinned протокол; миграцию на новую ревизию нужно делать отдельной проверяемой задачей.
+Описанные в [protocol revision 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28) self-contained requests и per-request capability negotiation относятся к другой ревизии. Не смешивайте их с lifecycle2025-11-25 этого проекта. Используйте закреплённый протокол; миграцию на новую ревизию выполняйте как отдельную проверяемую задачу.
 
-Особенно внимательно читайте ссылки latest: современная [страница Inspector](https://modelcontextprotocol.io/docs/tools/inspector) может описывать более новый CLI/режим переговоров, чем закреплённая версия лаборатории. Сборка и примеры сверяются с реальными sources SDK 2.1.0 и CLI, а не угадываются по статьям другой версии.
+Особенно внимательно читайте ссылки latest: современная [страница Inspector](https://modelcontextprotocol.io/docs/tools/inspector) может описывать более новый CLI/режим переговоров, чем закреплённая версия лаборатории. Сверяйте сборку и примеры с исходниками SDK 2.1.0 и закреплённого CLI: статьи для другой версии могут описывать иной контракт.
 
 ## 3. Tools, resources и prompts — разные примитивы
 
@@ -117,7 +117,7 @@ npm test
 </dependency>
 ```
 
-В сборке проверена effective версия SDK core/json-jackson3 — тоже2.1.0. Не считайте импорт Spring AI BOM самостоятельной гарантией версии произвольного SDK coordinate. Отдельный Maven-проект позволяет проверять именно этот согласованный набор.
+Проверьте effective версию SDK core/json-jackson3: в этой сборке она тоже должна быть 2.1.0. Не считайте импорт Spring AI BOM самостоятельной гарантией версии произвольного SDK coordinate. Отдельный Maven-проект позволяет проверять именно этот согласованный набор.
 
 Maven Shade plugin упаковывает dependencies, сохраняет service metadata и задаёт Main-Class `dev.myfrei.repopilot.mcp.TaskServerMain`. `finalName=taskshelf-mcp-server` даёт предсказуемый путь JAR. Его нельзя заменить обычным thin JAR без runtime classpath.
 
@@ -352,7 +352,7 @@ var task = client.callTool(McpSchema.CallToolRequest.builder("getTask")
 При закрытии stdin сервер завершается с exit 0, в том числе без initialize. SDK client.closeGracefully в проверенной среде может завершать owned process сигналом SIGTERM: child exit 143 при успешной очистке не равен ошибке MCP. Не требуйте exit 0 для всех способов shutdown/всех ОС. Существенны корректный результат операции и отсутствие оставшегося дочернего процесса.
 ## 15. Проверяем тот же JAR через Inspector 0.21.2
 
-Для лаборатории закреплён [Inspector 0.21.2](https://github.com/modelcontextprotocol/inspector/releases/tag/0.21.2), а не latest. Проверены его CLI arguments и реальные операции с этим JAR. Используйте Node 24 курса; package требует Node не ниже 22.7.5.
+Для лаборатории закреплён [Inspector 0.21.2](https://github.com/modelcontextprotocol/inspector/releases/tag/0.21.2), а не latest. Для команд ниже используйте этот CLI и Node 24 курса; package требует Node не ниже 22.7.5.
 
 Все команды ниже выполняются **из lecture** после server verify. JAVA_HOME должен указывать на JDK 25:
 
@@ -404,7 +404,7 @@ course_mcp --method prompts/get --prompt-name analyze_task --prompt-args taskId=
 
 Inspector CLI может pretty-print свой результат с переносами строк. Правило «одна JSON-RPC строка» относится к **server→client pipe**, а не к человекочитаемому stdout самого Inspector. Не подавайте pretty-printed вывод клиента обратно в stdin сервера.
 
-Web Inspector здесь не используется как доказательство: автоматическая подготовка проверила CLI, GUI отдельно не открывался. При желании изучите Web-режим по documentation выбранного tag, не меняя package version и не выдавая непроверенный UI-прогон за результат тестов.
+Команды этого раздела используют CLI Inspector. Если изучаете Web-режим, обратитесь к документации выбранного tag и сохраните package version. Наблюдения в GUI фиксируйте отдельно: успешная CLI- или SDK-проверка не подтверждает работу графического интерфейса.
 
 ## 16. Что этот урок ещё не подключает
 
@@ -428,7 +428,7 @@ STDIO хорошо показывает локальное владение до
 
 Корневой app Maven не агрегирует task-server. Успех только одной строки таблицы не подтверждает остальные. Для subprocess IT нужен `verify`, потому что JAR создаётся на package phase, а Failsafe запускает его после упаковки.
 
-Проверяются schemas/public views, строгие аргументы, content/structuredContent, lifecycle/negotiation, stderr/stdout, error envelopes, resources/prompts и очистка принадлежащего клиенту процесса. Фактические counters и результаты указаны в [VERIFICATION](../VERIFICATION.md); дополнительные веса модели не запускались и не требуются серверу.
+Проверьте schemas/public views, строгие аргументы, content/structuredContent, lifecycle/negotiation, stderr/stdout, error envelopes, resources/prompts и очистку принадлежащего клиенту процесса. Сервер не требует весов модели. [Результаты проверки примера](../VERIFICATION.md).
 
 Заполните [Mcp-Stdio-Experiment.md](evaluation/Mcp-Stdio-Experiment.md). Зафиксируйте хотя бы один успешный вызов каждого примитива, known-tool error и protocol error, согласованную version и cleanup. Не подменяйте result.isError=true обещанием «клиент подключился, значит инструмент работает».
 
@@ -479,7 +479,7 @@ java -cp task-server/target/taskshelf-mcp-server.jar \
 
 usedCodePoints считает только выбранный нормализованный текст, без IDs/JSON/separators. Это не байтовый cap TaskServerJson и не модельный token budget. Пустой eligible список — complete=true; частичный перечень — успешный result с complete=false, а не автоматически isError=true.
 
-После реализации выполните оба проекта и проверьте новый entrypoint через Inspector. [SUBMISSION](../homework/SUBMISSION.md) должен показать prefix/Unicode/duplicate-ID сценарии и tools/list базового и расширенного серверов. Точные команды/acceptance и результаты эталона — в homework README/VERIFICATION. Временное решение в каркас не включено.
+После реализации проверьте оба проекта и новый entrypoint через Inspector. В [SUBMISSION](../homework/SUBMISSION.md) покажите prefix/Unicode/duplicate-ID сценарии и tools/list базового и расширенного серверов. Точные команды и приёмочные критерии находятся в [README задания](../homework/README.md).
 
 ## 20. Самопроверка
 

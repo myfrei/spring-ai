@@ -1,12 +1,12 @@
 # Урок 4.3. Spring MCP server и Streamable HTTP
 
-[Материалы урока](../README.md) · [Предыдущая лекция 4.2](../../lesson-4.2/lecture/README.md) · [ДЗ](../homework/README.md) · [Проверка](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](task-http-server/src/test/java/) · [Все уроки](../../../README.md#программа) · [Предыдущая лекция 4.2](../../lesson-4.2/lecture/README.md) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-31. Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, MCP Java SDK 2.1.0. Согласуем protocol revision 2025-11-25; Inspector закреплён на 0.21.2.
+Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, MCP Java SDK 2.1.0. Согласуем protocol revision 2025-11-25; Inspector закреплён на 0.21.2.
 
 ## Результат занятия
 
-В 4.2 клиент запускал Java JAR и обменивался JSON-RPC через stdin/stdout. Теперь создадим отдельный Spring Boot MCP server, который заранее запущен и принимает Streamable HTTP на `http://127.0.0.1:8092/mcp`. Опубликуем тот же учебный каталог: listTasks/getTask, project overview resource и analyze_task prompt. Проверим сервер SDK-клиентом и Inspector, а границу доступа — отдельными HTTP-проверками.
+В 4.2 клиент запускал Java JAR и обменивался JSON-RPC через stdin/stdout. Теперь вы создадите отдельный Spring Boot MCP server, который заранее запущен и принимает Streamable HTTP на `http://127.0.0.1:8092/mcp`. Опубликуйте тот же учебный каталог: listTasks/getTask, project overview resource и analyze_task prompt. Проверьте сервер SDK-клиентом и Inspector, а границу доступа — отдельными HTTP-проверками.
 
 Сервер не вызывает LLM. Для нового сценария не нужны Ollama, embeddings или PostgreSQL. В папке `lecture` сохранено основное приложение RepoPilot и STDIO-проект 4.2; новый HTTP-сервер находится в отдельном `task-http-server`. Основной RepoPilot пока не превращается в MCP host от самого факта запуска сервера. Это следующий шаг 4.4.
 
@@ -398,7 +398,7 @@ Tool handlers не возвращают Java stack trace и не смешива�
   '-Dincludes=io.modelcontextprotocol.sdk:*'
 ```
 
-Первый проход проверяет не только вызов Java handler: контрактные проверки используют настоящий HTTP endpoint и SDK. Зависимости SDK core/JSON должны соответствовать закреплённому 2.1.0. Точные результаты, Inspector evidence и границы окружения приведены в [VERIFICATION](../VERIFICATION.md).
+Первый проход проверяет не только вызов Java handler: контрактные проверки используют настоящий HTTP endpoint и SDK. Зависимости SDK core/JSON должны соответствовать закреплённому 2.1.0. [Результаты проверки примера](../VERIFICATION.md).
 
 При чтении тестов найдите доказательства каждого свойства:
 
@@ -419,7 +419,7 @@ npm test
 
 pgvector-профиль требует Docker, а fixture chat/embedding endpoints не являются настоящими LLM weights. Если dependencies уже в cache, Maven можно запускать с `-o`; это свойство окружения, не обязательная часть первого setup.
 
-Тесты и CLI проверяют API/transport. В новом HTTP-сервере нет генерации, поэтому они не измеряют качество ответов модели. Числа тестов не дублируем в тексте: актуальный снимок — [VERIFICATION](../VERIFICATION.md).
+Тесты и CLI проверяют API/transport. В новом HTTP-сервере нет генерации, поэтому они не измеряют качество ответов модели. [Результаты проверки примера](../VERIFICATION.md).
 ## 12. Проводим эксперимент
 
 Откройте [пустой бланк](evaluation/Mcp-Http-Experiment.md). Сначала запишите версии и фактические capabilities, затем выполните discovery и все три вида примитивов. После положительного прохода проверьте доступ с отсутствующим/неверным bearer и с запрещённым Origin.
@@ -450,7 +450,7 @@ Result должен объяснять revision, состояния/attempts che
 
 Новый tool принимает только taskId: текущая revision2 и fixture observations создаются сервером. Профиль `release-homework` включает эту готовую регистрацию в проекте homework; по умолчанию базовый сервер публикует прежние два tools.
 
-Восемь новых acceptance-сценариев проверяют policy независимо от transport. Базовый набор продолжает проверять сервер лекции. Перед сдачей выполните команды из [homework README](../homework/README.md) и приложите [SUBMISSION](../homework/SUBMISSION.md), а не реализацию сервера заново. Стартовые красные проверки нового TODO и проверка временного эталона отдельно описаны в [VERIFICATION](../VERIFICATION.md).
+Восемь новых acceptance-сценариев проверяют policy независимо от transport. Базовый набор продолжает проверять сервер лекции. Перед сдачей выполните команды из [homework README](../homework/README.md) и приложите [SUBMISSION](../homework/SUBMISSION.md), а не реализацию сервера заново. До реализации нового TODO его приёмочные проверки ожидаемо не проходят. После решения проверьте весь набор, сохранив тесты без изменений. [Результаты проверки примера](../VERIFICATION.md).
 
 ## 14. Что должно остаться понятным
 

@@ -1,6 +1,6 @@
 # ДЗ5.1. Остановить повторяющиеся действия агента
 
-[Лекция](../lecture/README.md) · [Материалы](../README.md) · [Проверки](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/java/dev/myfrei/repopilot/progress/CycleStopRuleAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md) · [Проверки примера](../VERIFICATION.md)
 
 Вся база лекции готова: AgentEngine, Conversations/Runs, ручной model/tool loop, read-only TaskShelf tools, budget, события и raw journal. Новая функция — распознать повтор одного и того же чтения или короткой последовательности чтений и остановиться до очередного обращения к модели.
 
@@ -15,7 +15,7 @@
 ./mvnw -Phomework -Dtest=CycleStopRuleAcceptanceTest test
 ```
 
-Обычный test проверяет готовую базу и три предоставленных adapter-теста. Восемь новых acceptance исключены только Maven-профилем по умолчанию. Вторая команда включает их: до реализации ожидаются восемь ошибок TODO. После решения:
+Обычный test проверяет базу и предоставленные adapter-тесты. Новые acceptance исключены Maven-профилем по умолчанию; вторая команда включает их и показывает незавершённый TODO. После реализации выполните полную проверку:
 
 ```bash
 ./mvnw -Phomework verify
@@ -24,7 +24,7 @@ npm ci
 npm test
 ```
 
-pgvector-it проверяет унаследованный RAG и требует Docker. Само новое правило — чистая Java-логика; LLM, Git и PostgreSQL ему не нужны. Точные результаты — в VERIFICATION.
+Профиль pgvector-it проверяет RAG и требует Docker. Новое правило остановки проверяется как чистая Java-логика без LLM, Git и PostgreSQL. Результаты автоматических сценариев доступны в [отчёте проверки примера](../VERIFICATION.md).
 
 Запуск приложения с локальной моделью — по лекции:
 
@@ -96,6 +96,6 @@ A/B/C здесь обозначают целые наблюдения. Разн�
 
 Восемь acceptance проверяют недостаточную историю, период1, период2, период3/ограничение period4, участие каждого поля, повтор ошибок/изменённый результат, suffix вместо совпадения в середине и immutable/bounded input.
 
-Три предоставленных adapter-теста проверяют общий store при отдельном guarded engine, сохранение базового route, correlated NOT_EXECUTED для остатка batch и освобождение conversation при ошибке policy. Они используют тестовую rule и проходят до решения TODO; восемь acceptance проверяют именно вашу реализацию.
+Предоставленные adapter-тесты проверяют общий store при отдельном guarded engine, сохранение базового route, correlated NOT_EXECUTED для остатка batch и освобождение conversation при ошибке policy. Они используют тестовую rule, а acceptance проверяют вашу реализацию repeatedSuffix. Запускайте оба набора, чтобы проверить правило и его подключение к runtime.
 
 Заполните [SUBMISSION.md](SUBMISSION.md). Приложите хотя бы один scripted NO_PROGRESS и объяснение, почему COMPLETED означает завершение протокола модели, а не доказанное решение задачи.

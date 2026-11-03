@@ -1,8 +1,8 @@
 # Урок 1.1. От пустого Java-проекта до первого ответа локальной LLM
 
-[Все материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Проверка материалов](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/chat/) · [Все уроки](../../../README.md#программа) · [Проверки примера](../VERIFICATION.md)
 
-Дата: 2026-10-25. Учебная связка: **Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11**. Основной provider — Ollama. В этой папке находится полная реализация примера и его тесты.
+Учебная связка: **Java 25, Spring Boot 4.1.2, Spring AI 2.0.2, Maven 3.9.11**. Основной provider — Ollama. В этой папке находится полная реализация примера и его тесты.
 
 ## Результат занятия
 
@@ -77,7 +77,7 @@ java -version
 
 На Linux укажите путь к установленному JDK 25 в `JAVA_HOME`, затем добавьте `$JAVA_HOME/bin` в `PATH`. В Windows PowerShell задайте `$env:JAVA_HOME` и добавьте `$env:JAVA_HOME\bin` в начало `$env:Path`; проверьте `java -version` ещё раз. В IDE отдельно выберите Project SDK и JDK Maven runner.
 
-Для установки можно использовать [Eclipse Temurin](https://adoptium.net/installation/archives). Команды установки зависят от ОС; скачайте JDK именно для своей архитектуры. Во время подготовки материалов использовался Temurin 25.0.5, macOS aarch64.
+Для установки можно использовать [Eclipse Temurin](https://adoptium.net/installation/archives). Команды установки зависят от ОС; скачайте JDK 25 для своей операционной системы и архитектуры.
 
 ### Запускаем Ollama
 
@@ -105,7 +105,7 @@ ollama pull qwen2.5:3b
 ollama list
 ```
 
-Скачивание происходит один раз. Фактическая память runtime выше размера файла модели, а скорость зависит от компьютера. Сведения о модели и её условиях использования смотрите в [карточке qwen2.5:3b](https://ollama.com/library/qwen2.5:3b). Тег также может обновляться: сохраните ID модели из `ollama list` в отчёте. Для полностью повторяемого курса позже закрепим manifest.
+Скачивание происходит один раз. Фактическая память runtime выше размера файла модели, а скорость зависит от компьютера. Сведения о модели и её условиях использования смотрите в [карточке qwen2.5:3b](https://ollama.com/library/qwen2.5:3b). Тег также может обновляться: сохраните ID модели из `ollama list` в отчёте. Одного имени тега недостаточно, чтобы зафиксировать версию весов для повторного эксперимента.
 
 Если выбрали другую локальную chat-модель, используйте её одно и то же имя в `pull`, прямом запросе и конфигурации приложения. `qwen2.5:1.5b` можно рассмотреть для более ограниченной машины, но качество ответа потребуется проверить самостоятельно.
 
@@ -628,7 +628,7 @@ assertThat(prompt.getValue().getUserMessage().getText()).isEqualTo("Вопрос
 | [ChatControllerTest](src/test/java/dev/myfrei/repopilot/chat/ChatControllerTest.java) | 7 случаев: JSON, валидация до сервиса, HTTP 503 и отсутствие успешного `answer` при ошибке |
 | [OllamaHttpIntegrationTest](src/test/java/dev/myfrei/repopilot/chat/OllamaHttpIntegrationTest.java) | 4 случая: полный Boot HTTP-путь, модель/опции, HTTP 404 provider и таймаут, отсутствие вызова provider при невалидном вводе |
 
-Всего **25 проверок**, из них 21 — unit/MVC, 4 — HTTP-интеграционные. Последние поднимают два локальных порта: Boot и заглушку протокола Ollama. Настоящие веса не загружаются. Профиль `test` сокращает шум ожидаемых ошибок в логах; mock maker `mock-maker-subclass` не требует динамической загрузки Java agent.
+В проекте есть unit/MVC- и HTTP-интеграционные тесты. HTTP-тесты поднимают два локальных порта: Boot и заглушку протокола Ollama. Настоящие веса не загружаются. Профиль `test` сокращает шум ожидаемых ошибок в логах; mock maker `mock-maker-subclass` не требует динамической загрузки Java agent.
 
 ```bash
 ./mvnw -Dtest=ChatServiceTest,ChatControllerTest test
@@ -661,7 +661,7 @@ MockMvc проверяет HTTP-контракт без настоящего с�
 
 Реализуйте только [ExplanationPolicy.messages](../homework/src/main/java/dev/myfrei/repopilot/explanation/ExplanationPolicy.java). BRIEF просит ответ в трёх предложениях, GUIDED — в пяти шагах. Системная инструкция и вопрос должны оставаться отдельными сообщениями; выбранный режим не определяется текстом вопроса. Проверяйте границы ввода, сохраняйте вопрос после strip и возвращайте неизменяемый список. DTO, новый endpoint и вызов модели уже готовы.
 
-Новые [acceptance-тесты политики](../homework/src/test/java/dev/myfrei/repopilot/explanation/ExplanationAcceptanceTest.java) и [HTTP-контракта](../homework/src/test/java/dev/myfrei/repopilot/explanation/ExplanationHttpAcceptanceTest.java) проверяют поведение, которого нет в лекции. Согласно [VERIFICATION](../VERIFICATION.md), каркас компилируется, базовые **25 Java** зелёные. Из **8 новых** проверок четыре проходят на готовом wiring/DTO и четыре выявляют TODO. Во временном эталоне с заменой только policy все **33 Java** зелёные; тесты не менялись, решение в каркас не включено.
+Новые [acceptance-тесты политики](../homework/src/test/java/dev/myfrei/repopilot/explanation/ExplanationAcceptanceTest.java) и [HTTP-контракта](../homework/src/test/java/dev/myfrei/repopilot/explanation/ExplanationHttpAcceptanceTest.java) проверяют режимы объяснения, роли сообщений, валидацию и подключение policy к API. Реализуйте новую политику и выполните весь набор: вместе с новым поведением должен продолжать работать базовый чат. Состав и границы проверок описаны в [VERIFICATION](../VERIFICATION.md).
 
 После реализации выполните `./mvnw test` из homework. С настоящим Ollama отправьте один вопрос в обоих режимах и заполните [SUBMISSION](../homework/SUBMISSION.md): какой формат оказался полезнее и где модель нарушила инструкцию. Проверки ролей доказывают состав запроса, но не гарантируют послушание модели. На работу ориентировочно 2–3 часа.
 

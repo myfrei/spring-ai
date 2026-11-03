@@ -1,6 +1,6 @@
 # ДЗ5.2. Проверить, что ссылки ответа опираются на прочитанный код
 
-[Лекция](../lecture/README.md) · [Материалы](../README.md) · [Проверки](../VERIFICATION.md)
+[Материалы урока](../README.md) · [Лекция](../lecture/README.md) · [Приёмочные тесты](src/test/java/dev/myfrei/repopilot/evidence/EvidencePolicyAcceptanceTest.java) · [Отчёт по ДЗ](SUBMISSION.md) · [Проверки примера](../VERIFICATION.md)
 
 Вся база лекции готова: manual agent runtime, listFiles/searchText/readFile/gitStatus/gitDiff, проверка workspace, настоящий Git и Java25 target Stock Room. Новое приращение — проверка заявленных ссылок на код по журналу чтения конкретного run и текущей версии файла.
 
@@ -15,7 +15,7 @@
 ./mvnw -Phomework -Dtest=EvidencePolicyAcceptanceTest test
 ```
 
-Обычная сборка проверяет готовые функции и три предоставленных adapter-теста. Восемь новых acceptance включаются профилем homework и ожидаемо красные до решения. После реализации:
+Обычная сборка проверяет готовые функции и предоставленные adapter-тесты. Профиль homework включает acceptance для вашей policy; до реализации они выявляют TODO. После реализации выполните полную проверку:
 
 ```bash
 ./mvnw verify -Phomework,pgvector-it
@@ -124,7 +124,7 @@ currentHashes: path → SHA-256
 
 Восемь acceptance проверяют точное чтение, объединение пересечений/соседних ranges, пропуск, изоляцию run/path/version, приоритет STALE/NOT_READ, UNAVAILABLE, порядок/дубликаты/immutability и inclusive boundaries/input guards. Сценарии с пропуском одновременно с отсутствующим/изменившимся hash проверяют именно порядок причин.
 
-Три готовых adapter-теста проверяют закрытый decoder, реальные server receipts/current hash без lookup непрочитанного пути, повторный lookup после изменения, длинный допустимый путь в другом receipt и HTTP typed errors. Они подставляют capture policy и проходят до решения TODO. Восемь acceptance проверяют именно вашу логику.
+Предоставленные adapter-тесты проверяют закрытый decoder, реальные server receipts/current hash без lookup непрочитанного пути, повторный lookup после изменения, длинный допустимый путь в другом receipt и HTTP typed errors. Они подставляют capture policy. Acceptance проверяют вашу логику; используйте оба набора для проверки policy и её подключения к API.
 
 Для демонстрации: получите SUPPORTED по фактическому чтению; затем вручную измените учебный файл и проверьте тот же claim — STALE. Не переносите этот изменённый файл в сдаваемый baseline без объяснения. NOT_READ покажите для другой версии/пути при доступном ledger; OUTSIDE_READ_RANGES — для непокрытых строк. В тестах воспроизводите пробелы покрытия напрямую: реальная модель может выбрать другой диапазон.
 

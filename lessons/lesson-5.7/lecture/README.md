@@ -1,5 +1,7 @@
 # Урок 5.7. Изолированная проверка: FAIL → правка → PASS
 
+[Материалы урока](../README.md) · [Домашнее задание](../homework/README.md) · [Тесты примера](src/test/java/dev/myfrei/repopilot/verification/) · [Все уроки](../../../README.md#программа)
+
 RepoPilot уже умеет исследовать файлы, сохранять план и предлагать точный patch. Но строка «исправлено» пока не подтверждает поведение программы. В этом уроке добавим фиксированную проверку StockLedger в отдельном Docker-контейнере и свяжем её с конкретной версией исходника.
 
 Результат: человек разрешает проверку точных входов, приложение получает реальный FAIL, агент читает этот отчёт и предлагает patch. После отдельного разрешения на запись новая версия проверяется по новому разрешению и получает PASS. Каждый результат имеет input hash, image ID, exit code и время исполнения.
@@ -516,7 +518,7 @@ Default suite не запускает Docker runner: HTTP-тест исполь�
 
 Docker IT проверяют: FAIL → отдельное чтение и manual patch approval → новая проверка PASS; ранний System.exit0 в target не даёт PASS; запреты записи input, сети и socket; writable build tmpfs; timeout с удалением owned container; усечение output; stale approval и replay.
 
-Service-тесты проверяют TTL, состояния, ограничение попыток, отсутствие автоматического retry, concurrent approval и scoped read-only report tool. В HTTP-тестах отдельно проверено, что run.COMPLETED может сопровождаться CHECKED_FAIL, а внешний edit даёт STALE.
+Service-тесты проверяют TTL, состояния, ограничение попыток, отсутствие автоматического retry, concurrent approval и scoped read-only report tool. HTTP-тесты проверяют, что run.COMPLETED может сопровождаться CHECKED_FAIL, а внешний edit даёт STALE. Запустите их, чтобы проверить различие завершённого ответа, исторического отчёта и актуального результата исполнения.
 
 Для ручных негативных проверок создавайте новые requests: REJECT не запускает command; изменение файла между request и APPROVE даёт VERIFICATION_STALE; повтор APPROVE даёт VERIFICATION_NOT_PENDING.
 
